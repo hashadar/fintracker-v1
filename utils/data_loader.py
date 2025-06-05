@@ -46,4 +46,13 @@ def get_month_range(df):
     min_month = months.min()
     max_month = months.max()
     month_options = [month.strftime("%B %Y") for month in months]
-    return month_options, min_month, max_month 
+    return month_options, min_month, max_month
+
+def save_data(df):
+    """Save the DataFrame to the primary Excel file."""
+    try:
+        with pd.ExcelWriter("202506_equity_hd.xlsx", engine='openpyxl', mode='w') as writer:
+            df.to_excel(writer, sheet_name='Sheet1', index=False)
+        # st.sidebar.success("Data saved successfully to 202506_equity_hd.xlsx") # Optional: for direct calls
+    except Exception as e:
+        st.sidebar.error(f"Error saving data: {str(e)}") 

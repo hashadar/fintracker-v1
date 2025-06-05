@@ -3,6 +3,7 @@
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+import plotly.graph_objs as go
 
 # --- Time Series and Breakdown Visualizations ---
 def create_asset_type_time_series(df, asset_type):
@@ -65,32 +66,61 @@ def create_asset_type_breakdown(df, asset_type):
     return fig_platform, fig_asset
 
 # --- KPI Card Component ---
+def create_pie_chart(df, names, values, title):
+    """Creates a standard pie chart."""
+    fig = px.pie(df, names=names, values=values, title=title, hole=0.3)
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    return fig
+
+def create_bar_chart(df, x, y, title, labels):
+    """Creates a standard bar chart."""
+    fig = px.bar(df, x=x, y=y, title=title, labels=labels)
+    return fig
+
 def kpi_card(label, value, mom_delta=None, ytd_delta=None, mom_color=None, ytd_color=None, help_text=None):
-    """Reusable KPI card/box component for consistent metric display, with both MoM and YTD deltas."""
+    """
+    Reusable KPI card component for consistent metric display.
+    It can display month-over-month/year-to-date deltas and an optional subtitle/help text.
+    """
+    
     def delta_html(delta, color):
         if delta is None:
             return ''
-        c = 'black'
+        
+        c = '#888'  # Default color
         if color == 'normal':
             c = 'green'
         elif color == 'inverse':
             c = 'red'
         return f"<span style='color: {c}; font-weight: 500;'>{delta}</span>"
+
     mom_html = delta_html(mom_delta, mom_color)
     ytd_html = delta_html(ytd_delta, ytd_color)
-    subtext = ''
-    if mom_html or ytd_html:
-        subtext = f"<div style='font-size: 1.1rem; margin-top: 0.2rem;'>"
-        subtext += mom_html if mom_html else ''
-        subtext += (' | ' if mom_html and ytd_html else '')
-        subtext += ytd_html if ytd_html else ''
-        subtext += "</div>"
+    
+    subtext_parts = []
+    if mom_html:
+        subtext_parts.append(mom_html)
+    if ytd_html:
+        subtext_parts.append(ytd_html)
+    
+    subtext_final = " | ".join(subtext_parts)
+    
+    if not subtext_final and help_text:
+        subtext_final = help_text
+
     card_html = f"""
-    <div style='display: flex; flex-direction: column; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 1.2rem 1.5rem; margin: 0.5rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); min-width: 180px;'>
-        <div style='font-size: 1.1rem; color: #666;'>{label}</div>
-        <div style='font-size: 2rem; font-weight: bold; color: #222;'>{value}</div>
-        {subtext}
-        {f"<div style='font-size: 0.95rem; color: #888; margin-top: 0.2rem;'>{help_text}</div>" if help_text else ''}
+    <div style="
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 1rem;
+    ">
+        <h3 style="font-size: 1rem; font-weight: normal; margin: 0; color: #666;">{label}</h3>
+        <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">{value}</p>
+        <div style="font-size: 1rem; color: #888; margin-top: 0.2rem;">{subtext_final}</div>
     </div>
     """
     st.markdown(card_html, unsafe_allow_html=True)
