@@ -12,7 +12,6 @@ FinTracker is a financial dashboard that provides insights into your financial p
 -   **Car Equity Tracker**: A detailed dashboard for tracking vehicle equity, costs, depreciation, and PNL.
 -   **Interactive Dashboards**: All pages feature interactive charts and tables to explore your data.
 -   **Excel-Powered**: Data is managed through simple and transparent Excel files.
--   **Data Privacy by Design**: The app is configured to use local data files that are excluded from version control.
 
 ## Data Privacy
 
