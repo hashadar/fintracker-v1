@@ -99,12 +99,30 @@ The application requires financial data in an Excel file format with the followi
 
 ## Project Structure
 
-- `app.py`: Main Streamlit application
-- `utils/`: Utility modules (see [utils/README.md](utils/README.md) for details)
-  - `data_loader.py`: Data loading and preprocessing
-  - `metrics.py`: Financial calculations
-  - `visualizations.py`: Chart and component creation
-  - `constants.py`: Application configuration
+- `app.py`: Main Streamlit application launcher and router.
+- `pages/`: Directory containing individual page modules for the Streamlit application.
+  - `overview.py`: Logic for the main overview page.
+  - `cars.py`: Logic for the car equity deep dive page.
+  - `cash.py`: Logic for the cash deep dive page.
+  - `investments.py`: Logic for the investments deep dive page.
+  - `pensions.py`: Logic for the pensions deep dive page.
+  - `all_assets.py`: Logic for the consolidated assets deep dive page.
+- `utils/`: General utility modules (see [utils/README.md](utils/README.md) for details).
+  - `data_loader.py`: Data loading and preprocessing for main financial data.
+  - `metrics.py`: Financial calculations for main financial data.
+  - `visualizations.py`: Chart and UI component creation.
+  - `constants.py`: Application-wide constants and configuration.
+- `utils/car/`: Utility modules specific to car equity tracking (see [utils/car/README.md](utils/car/README.md) for details).
+  - `car_constants.py`: Constants for car data (statuses, fuel types, etc.).
+  - `car_data_loader.py`: Data loading, saving, and Excel template creation for car data.
+  - `car_metrics.py`: Calculations for car equity, costs, depreciation.
+  - `car_visualizations.py`: Chart generation for car-specific data.
+  - `car_test_data.py`: Script to populate car data for testing.
+  - `car_dashboard_test.py`: Script to test car dashboard components.
+- `car_equity_tracker.xlsx`: Excel template for tracking car-related data.
+- `requirements.txt`: Python package dependencies.
+- `.gitignore`: Specifies intentionally untracked files.
+- `README.md`: This file.
 
 ## Development Roadmap
 
@@ -112,20 +130,20 @@ The application requires financial data in an Excel file format with the followi
 - Implement proper tracking of cash flows (inflows and outflows)
 - Integrate bank APIs for automated data collection
 - Add support for financial institution APIs (e.g., investment platforms)
-- Develop car equity tracking module
+- Develop car equity tracking module (Phase 1: Core infrastructure and dashboard page complete)
   - Track vehicle value depreciation
   - Monitor maintenance costs
   - Financial information such as equity
 
 ### Application Architecture
-- Refactor into a multi-page application
-  - Separate pages for different asset types
-  - Dedicated pages for analysis and reporting
-  - Settings and configuration page
-- Componentise the application
-  - Create reusable dashboard components
-  - Develop standardised chart components
-  - Implement consistent styling system
+- Refactor into a multi-page application (Complete)
+  - Separate pages for different asset types (Complete)
+  - Dedicated pages for analysis and reporting (Partially complete via deep dive pages)
+  - Settings and configuration page (Future)
+- Componentise the application (Ongoing)
+  - Create reusable dashboard components (Partially complete with `kpi_card` and page modules)
+  - Develop standardised chart components (Ongoing)
+  - Implement consistent styling system (Partially complete)
 
 ### Analytics and Metrics
 - Consolidate financial metrics
