@@ -4,7 +4,11 @@ from utils import (
     calculate_asset_type_metrics,
     create_asset_type_time_series,
     create_asset_type_breakdown,
-    display_asset_type_metrics
+    # New card components
+    complex_emphasis_card,
+    simple_card,
+    # Design tokens
+    BRAND_PRIMARY, BRAND_SUCCESS, BRAND_WARNING
 )
 
 # Load data at the top of the page
@@ -24,14 +28,50 @@ if df is not None:
         # --- METRICS ---
         metrics = calculate_asset_type_metrics(df, asset_type)
         if metrics:
-            st.markdown(display_asset_type_metrics(metrics, asset_type), unsafe_allow_html=True)
+            # Main pension position with emphasis (shows value, MoM, YTD)
+            complex_emphasis_card(
+                title="Total Pension Value",
+                metric=f"£{metrics['latest_value']:,.2f}",
+                mom_change=f"{metrics['mom_change']:+.1f}% MoM",
+                ytd_change=f"{metrics.get('ytd_change', 0):+.1f}% YTD",
+                caption=f"Latest value as of {metrics.get('latest_month', 'N/A')}",
+                mom_color="normal" if metrics['mom_change'] >= 0 else "inverse",
+                ytd_color="normal" if metrics.get('ytd_change', 0) >= 0 else "inverse",
+                emphasis_color=BRAND_WARNING
+            )
+            # Additional summary stats (counts, tracked months) use simple_card
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                simple_card(
+                    title="Number of Platforms",
+                    metric=str(metrics['platforms']),
+                    caption="Pension providers"
+                )
+            with col2:
+                simple_card(
+                    title="Number of Assets",
+                    metric=str(metrics['assets']),
+                    caption="Pension schemes"
+                )
+            with col3:
+                simple_card(
+                    title="Months Tracked",
+                    metric=str(metrics['months_tracked']),
+                    caption="Data history length"
+                )
 
+            # Platform breakdown with new cards
             if metrics.get('latest_platform_breakdown'):
-                st.markdown("#### Latest Month Platform Breakdown")
+                st.markdown("---")
+                st.subheader("Platform Breakdown")
                 platform_cols = st.columns(len(metrics['latest_platform_breakdown']))
                 for (platform, value), col in zip(metrics['latest_platform_breakdown'].items(), platform_cols):
                     with col:
-                        st.metric(label=platform, value=f"£{value:,.2f}")
+                        simple_card(
+                            title=platform,
+                            metric=f"£{value:,.2f}",
+                            caption=f"{(value/metrics['latest_value']*100):.1f}% of total"
+                        )
         else:
             st.info("No summary metrics could be calculated.")
 

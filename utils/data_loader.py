@@ -8,7 +8,7 @@ from .constants import ASSET_TYPES
 def load_data():
     """Load and preprocess the financial data from Excel. Adds asset type and ensures one entry per platform-asset per month."""
     try:
-        df = pd.read_excel("202506_equity_hd.xlsx", sheet_name=0)
+        df = pd.read_excel("data/202507_equity_hd.xlsx", sheet_name=0)
         
         # Convert Timestamp to datetime
         df['Timestamp'] = pd.to_datetime(df['Timestamp'])
@@ -51,8 +51,8 @@ def get_month_range(df):
 def save_data(df):
     """Save the DataFrame to the primary Excel file."""
     try:
-        with pd.ExcelWriter("202506_equity_hd.xlsx", engine='openpyxl', mode='w') as writer:
+        with pd.ExcelWriter("data/202506_equity_hd.xlsx", engine='openpyxl', mode='w') as writer:
             df.to_excel(writer, sheet_name='Sheet1', index=False)
-        # st.sidebar.success("Data saved successfully to 202506_equity_hd.xlsx") # Optional: for direct calls
+        # st.sidebar.success("Data saved successfully to data/202506_equity_hd.xlsx") # Optional: for direct calls
     except Exception as e:
         st.sidebar.error(f"Error saving data: {str(e)}") 

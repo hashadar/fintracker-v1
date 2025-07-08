@@ -4,6 +4,28 @@ import plotly.express as px
 import pandas as pd
 import streamlit as st
 import plotly.graph_objs as go
+import html
+from utils.design_tokens import (
+    # Color tokens
+    BRAND_PRIMARY, BRAND_SUCCESS, BRAND_ERROR, NEUTRAL_500,
+    BACKGROUND_PRIMARY, BORDER_PRIMARY, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_TERTIARY,
+    SHADOW_SM, SHADOW_MD, SHADOW_LG,
+    # Typography tokens
+    FONT_SIZE_XS, FONT_SIZE_SM, FONT_SIZE_4XL, FONT_SIZE_5XL,
+    FONT_WEIGHT_MEDIUM, FONT_WEIGHT_SEMIBOLD, FONT_WEIGHT_BOLD, FONT_WEIGHT_EXTRABOLD,
+    LINE_HEIGHT_TIGHT, LETTER_SPACING_WIDER,
+    # Spacing tokens
+    SPACE_2, SPACE_4, SPACE_6,
+    # Border radius tokens
+    BORDER_RADIUS_XL,
+    # Transition tokens
+    TRANSITION_NORMAL,
+    # Utility functions
+    get_change_color, get_emphasis_color, get_background_gradient, get_border_color,
+    get_card_base_styles, get_emphasis_card_styles, get_card_title_styles,
+    get_emphasis_card_title_styles, get_card_metric_styles, get_card_caption_styles,
+    get_card_change_styles, get_emphasis_accent_bar
+)
 
 # --- Time Series and Breakdown Visualizations ---
 def create_asset_type_time_series(df, asset_type):
@@ -87,12 +109,12 @@ def kpi_card(label, value, mom_delta=None, ytd_delta=None, mom_color=None, ytd_c
         if delta is None:
             return ''
         
-        c = '#888'  # Default color
+        c = NEUTRAL_500  # Default color
         if color == 'normal':
-            c = 'green'
+            c = BRAND_SUCCESS
         elif color == 'inverse':
-            c = 'red'
-        return f"<span style='color: {c}; font-weight: 500;'>{delta}</span>"
+            c = BRAND_ERROR
+        return f"<span style='color: {c}; font-weight: 500;'>{html.escape(str(delta))}</span>"
 
     mom_html = delta_html(mom_delta, mom_color)
     ytd_html = delta_html(ytd_delta, ytd_color)
@@ -106,7 +128,7 @@ def kpi_card(label, value, mom_delta=None, ytd_delta=None, mom_color=None, ytd_c
     subtext_final = " | ".join(subtext_parts)
     
     if not subtext_final and help_text:
-        subtext_final = help_text
+        subtext_final = html.escape(str(help_text))
 
     card_html = f"""
     <div style="
@@ -118,12 +140,162 @@ def kpi_card(label, value, mom_delta=None, ytd_delta=None, mom_color=None, ytd_c
         text-align: center;
         margin-bottom: 1rem;
     ">
-        <h3 style="font-size: 1rem; font-weight: normal; margin: 0; color: #666;">{label}</h3>
-        <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">{value}</p>
+        <h3 style="font-size: 1rem; font-weight: normal; margin: 0; color: #666;">{html.escape(str(label))}</h3>
+        <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">{html.escape(str(value))}</p>
         <div style="font-size: 1rem; color: #888; margin-top: 0.2rem;">{subtext_final}</div>
     </div>
     """
     st.markdown(card_html, unsafe_allow_html=True)
+
+# --- NEW REUSABLE CARD COMPONENTS ---
+
+def simple_card(title, metric, caption=None):
+    """
+    Simple card component for displaying a single metric.
+    """
+    # Ensure all inputs are strings and stripped, then escape HTML to prevent injection
+    title = html.escape(str(title).strip()) if title else ""
+    metric = html.escape(str(metric).strip()) if metric else ""
+    caption = html.escape(str(caption).strip()) if caption else ""
+    
+    # Build HTML with conditional caption rendering (only if caption exists)
+    card_html = f"""
+    <div style="{get_card_base_styles()}">
+        <div style="{get_card_title_styles()}">{title}</div>
+        <div style="{get_card_metric_styles(FONT_SIZE_4XL)}">{metric}</div>
+        {f'<div style="{get_card_caption_styles()}">{caption}</div>' if caption else ''}
+    </div>
+    """
+    st.markdown(card_html.strip(), unsafe_allow_html=True)
+
+def emphasis_card(title, metric, caption=None, emphasis_color=BRAND_PRIMARY):
+    """
+    Emphasis card component with highlighted styling to call attention.
+    """
+    # Ensure all inputs are strings and stripped, then escape HTML to prevent injection
+    title = html.escape(str(title).strip()) if title else ""
+    metric = html.escape(str(metric).strip()) if metric else ""
+    caption = html.escape(str(caption).strip()) if caption else ""
+    
+    # Build HTML with emphasis styling and conditional caption rendering
+    card_html = f"""
+    <div style="{get_emphasis_card_styles(emphasis_color)}">
+        <div style="{get_emphasis_accent_bar(emphasis_color)}"></div>
+        <div style="{get_emphasis_card_title_styles(emphasis_color)}">{title}</div>
+        <div style="{get_card_metric_styles(FONT_SIZE_5XL)}">{metric}</div>
+        {f'<div style="{get_card_caption_styles()}">{caption}</div>' if caption else ''}
+    </div>
+    """
+    st.markdown(card_html.strip(), unsafe_allow_html=True)
+
+def complex_card(title, metric, mom_change=None, ytd_change=None, caption=None, mom_color="normal", ytd_color="normal"):
+    """
+    Complex card component displaying metric with MoM and YTD changes.
+    """
+    # Ensure all inputs are strings and stripped, then escape HTML to prevent injection
+    title = html.escape(str(title).strip()) if title else ""
+    metric = html.escape(str(metric).strip()) if metric else ""
+    
+    # Handle caption: check if it's already HTML (from previous processing) or needs escaping
+    caption_str = str(caption).strip() if caption is not None else ""
+    if caption_str and caption_str.startswith('<div'):
+        caption_html = caption_str  # Already processed HTML
+    elif caption_str:
+        caption_html = f'<div style="{get_card_caption_styles()}">{html.escape(caption_str)}</div>'
+    else:
+        caption_html = ""
+    
+    # Process change indicators with HTML escaping
+    mom_change = html.escape(str(mom_change).strip()) if mom_change else ""
+    ytd_change = html.escape(str(ytd_change).strip()) if ytd_change else ""
+
+    # Get color hex values for change indicators
+    mom_color_hex = get_change_color(mom_color)
+    ytd_color_hex = get_change_color(ytd_color)
+    
+    # Build changes HTML only if at least one change indicator exists
+    changes_html = ""
+    if mom_change or ytd_change:
+        changes_parts = []
+        if mom_change:
+            changes_parts.append(f'<span style="color: {mom_color_hex}; font-weight: {FONT_WEIGHT_SEMIBOLD};">{mom_change}</span>')
+        if ytd_change:
+            changes_parts.append(f'<span style="color: {ytd_color_hex}; font-weight: {FONT_WEIGHT_SEMIBOLD};">{ytd_change}</span>')
+        changes_html = f'<div style="{get_card_change_styles()}">{" | ".join(changes_parts)}</div>'
+    
+    # Combine changes and caption: only render if at least one is non-empty
+    content_html = ''
+    if changes_html and caption_html:
+        content_html = f'{changes_html}{caption_html}'
+    elif changes_html:
+        content_html = changes_html
+    elif caption_html:
+        content_html = caption_html
+    
+    # Build final card HTML
+    card_html = f"""
+    <div style="{get_card_base_styles()}">
+        <div style="{get_card_title_styles()}">{title}</div>
+        <div style="{get_card_metric_styles(FONT_SIZE_4XL)}">{metric}</div>
+        {content_html}
+    </div>
+    """
+    st.markdown(card_html.strip(), unsafe_allow_html=True)
+
+def complex_emphasis_card(title, metric, mom_change=None, ytd_change=None, caption=None, mom_color="normal", ytd_color="normal", emphasis_color=BRAND_PRIMARY):
+    """
+    Complex emphasis card component with highlighted styling and change indicators.
+    """
+    # Ensure all inputs are strings and stripped, then escape HTML to prevent injection
+    title = html.escape(str(title).strip()) if title else ""
+    metric = html.escape(str(metric).strip()) if metric else ""
+    
+    # Handle caption: check if it's already HTML (from previous processing) or needs escaping
+    caption_str = str(caption).strip() if caption is not None else ""
+    if caption_str and caption_str.startswith('<div'):
+        caption_html = caption_str  # Already processed HTML
+    elif caption_str:
+        caption_html = f'<div style="{get_card_caption_styles()}">{html.escape(caption_str)}</div>'
+    else:
+        caption_html = ""
+    
+    # Process change indicators with HTML escaping
+    mom_change = html.escape(str(mom_change).strip()) if mom_change else ""
+    ytd_change = html.escape(str(ytd_change).strip()) if ytd_change else ""
+
+    # Get color hex values for change indicators
+    mom_color_hex = get_change_color(mom_color)
+    ytd_color_hex = get_change_color(ytd_color)
+    
+    # Build changes HTML only if at least one change indicator exists
+    changes_html = ""
+    if mom_change or ytd_change:
+        changes_parts = []
+        if mom_change:
+            changes_parts.append(f'<span style="color: {mom_color_hex}; font-weight: {FONT_WEIGHT_SEMIBOLD};">{mom_change}</span>')
+        if ytd_change:
+            changes_parts.append(f'<span style="color: {ytd_color_hex}; font-weight: {FONT_WEIGHT_SEMIBOLD};">{ytd_change}</span>')
+        changes_html = f'<div style="{get_card_change_styles()}">{" | ".join(changes_parts)}</div>'
+    
+    # Combine changes and caption: only render if at least one is non-empty
+    content_html = ''
+    if changes_html and caption_html:
+        content_html = f'{changes_html}{caption_html}'
+    elif changes_html:
+        content_html = changes_html
+    elif caption_html:
+        content_html = caption_html
+    
+    # Build final card HTML with emphasis styling
+    card_html = f"""
+    <div style="{get_emphasis_card_styles(emphasis_color)}">
+        <div style="{get_emphasis_accent_bar(emphasis_color)}"></div>
+        <div style="{get_emphasis_card_title_styles(emphasis_color)}">{title}</div>
+        <div style="{get_card_metric_styles(FONT_SIZE_5XL)}">{metric}</div>
+        {content_html}
+    </div>
+    """
+    st.markdown(card_html.strip(), unsafe_allow_html=True)
 
 # --- Asset Type Metrics Display ---
 def display_asset_type_metrics(metrics, asset_type):
@@ -132,13 +304,13 @@ def display_asset_type_metrics(metrics, asset_type):
         return
     return f"""
         <div class='asset-type-header'>
-            <h2>{asset_type}</h2>
+            <h2>{html.escape(str(asset_type))}</h2>
             <div style='display: flex; justify-content: space-between;'>
                 <div>Latest Value: £{metrics['latest_value']:,.2f}</div>
                 <div>MoM Change: {metrics['mom_change']:+.1f}%</div>
-                <div>Platforms: {metrics['platforms']}</div>
-                <div>Assets: {metrics['assets']}</div>
-                <div>Months Tracked: {metrics['months_tracked']}</div>
+                <div>Platforms: {html.escape(str(metrics['platforms']))}</div>
+                <div>Assets: {html.escape(str(metrics['assets']))}</div>
+                <div>Months Tracked: {html.escape(str(metrics['months_tracked']))}</div>
             </div>
         </div>
     """ 

@@ -106,13 +106,13 @@ def create_car_data_template(file_path):
             pd.DataFrame(columns=definition["columns"]).to_excel(writer, sheet_name=sheet_name, index=False)
     st.success(f"Car data template created at {file_path}")
 
-def check_and_generate_car_data_file(file_path="car_data.xlsx"):
+def check_and_generate_car_data_file(file_path="data/car_data.xlsx"):
     """Checks if the car data Excel file exists. If not, it generates a new template."""
     if not os.path.exists(file_path):
         create_car_data_template(file_path)
 
 @st.cache_data
-def load_car_data(file_path="car_data.xlsx"):
+def load_car_data(file_path="data/car_data.xlsx"):
     """
     Loads car data from the specified Excel file, performs validation, and converts types.
     Returns a dictionary of DataFrames, one for each sheet.
@@ -163,7 +163,7 @@ def load_car_data(file_path="car_data.xlsx"):
         st.error(f"An error occurred while loading or validating the car data file: {e}")
         return None
 
-def populate_with_test_data(file_path="car_data.xlsx"):
+def populate_with_test_data(file_path="data/car_data.xlsx"):
     """Overwrites the existing Excel file with sample test data."""
     today = datetime.now()
     test_data = {

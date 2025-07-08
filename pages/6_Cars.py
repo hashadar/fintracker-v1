@@ -10,7 +10,7 @@ st.set_page_config(layout="wide")
 
 # --- Page Setup and Data Loading ---
 st.title("🚗 Car Equity Tracker")
-CAR_DATA_FILE = "car_data.xlsx"
+CAR_DATA_FILE = "data/car_data.xlsx"
 check_and_generate_car_data_file(CAR_DATA_FILE)
 car_data = load_car_data(CAR_DATA_FILE)
 
@@ -18,7 +18,7 @@ car_data = load_car_data(CAR_DATA_FILE)
 def display_data_model_explanation():
     with st.expander("How to Edit Your Car Data", expanded=False):
         st.markdown("""
-        This dashboard is powered by the `car_data.xlsx` file in the app's root directory. You can edit this file directly to manage your car data. 
+        This dashboard is powered by the `car_data.xlsx` file in the `data` directory. You can edit this file directly to manage your car data. 
         
         **Key Concepts:**
         - **Primary Key (PK)**: A unique identifier for a row in a sheet (e.g., `CarID` in the `Cars` sheet). It must be unique.
@@ -52,7 +52,7 @@ if car_data is None:
     display_data_model_explanation()
 
 elif car_data == "empty":
-    st.info("Your car data file is empty. Add data to `car_data.xlsx` to get started, or use the button below to add sample data.")
+    st.info("Your car data file is empty. Add data to `data/car_data.xlsx` to get started, or use the button below to add sample data.")
     if st.button("Populate with Sample Data"):
         populate_with_test_data(CAR_DATA_FILE)
         st.rerun()

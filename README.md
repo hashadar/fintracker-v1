@@ -4,7 +4,7 @@ A financial dashboard and analytics application built with Streamlit for trackin
 
 ## Overview
 
-FinTracker is a financial dashboard that provides insights into your financial portfolio. The application is structured as a multi-page Streamlit app, with dedicated pages for different asset classes.
+FinTracker is a financial dashboard that provides insights into your financial portfolio. The application is structured as a multi-page Streamlit app, with dedicated pages for different asset classes and a comprehensive car equity tracker.
 
 ### Key Features
 
@@ -12,6 +12,7 @@ FinTracker is a financial dashboard that provides insights into your financial p
 -   **Car Equity Tracker**: A detailed dashboard for tracking vehicle equity, costs, depreciation, and PNL.
 -   **Interactive Dashboards**: All pages feature interactive charts and tables to explore your data.
 -   **Excel-Powered**: Data is managed through simple and transparent Excel files.
+-   **Consistent UI Components**: Reusable card components for consistent metric display across all pages.
 
 ## Data Privacy
 
@@ -56,33 +57,76 @@ Your financial data files will remain on your local machine and will not be comm
 
 The application uses two main data files:
 
-1.  **`202506_equity_hd.xlsx`**: For general financial assets (cash, investments, pensions). It requires the following columns:
+1.  **`data/202506_equity_hd.xlsx`**: For general financial assets (cash, investments, pensions). It requires the following columns:
     *   `Timestamp`: Date of the record.
     *   `Asset_Type`: Category of the asset (e.g., "Cash", "Investments").
     *   `Platform`: Specific platform or account name.
     *   `Value`: Monetary value of the asset.
 
-2.  **`car_data.xlsx`**: For the Car Equity Tracker. This file and its required multi-sheet structure are generated automatically by the application. The "Cars" page contains a detailed in-app guide on how to populate this file.
+2.  **`data/car_data.xlsx`**: For the Car Equity Tracker. This file and its required multi-sheet structure are generated automatically by the application. The "Cars" page contains a detailed in-app guide on how to populate this file.
+
+## UI Components
+
+### Card Components
+
+The application uses a set of reusable card components for consistent metric display:
+
+- **`simple_card`**: Basic metric display with title, value, and optional caption
+- **`emphasis_card`**: Highlighted card with emphasis styling for important metrics
+- **`complex_card`**: Metric with Month-over-Month (MoM) and Year-to-Date (YTD) change indicators
+- **`complex_emphasis_card`**: Emphasis card with change indicators
+
+#### Usage Guidelines
+
+- Use `simple_card` for summary metrics without change tracking (e.g., "Maximum Drawdown", "Best Month")
+- Use `complex_card` for metrics with change indicators (e.g., asset type totals with MoM/YTD changes)
+- Use `emphasis_card` or `complex_emphasis_card` for the most important metrics (e.g., portfolio total)
+- All card components automatically handle HTML escaping and conditional rendering
+
+### Design System
+
+The application uses a consistent design system with:
+- **Design Tokens**: Centralized color, spacing, and typography definitions
+- **Responsive Layout**: Cards and components adapt to different screen sizes
+- **Accessibility**: Proper contrast ratios and semantic HTML structure
 
 ## Financial Data ETL Process
 
 For the main financial assets, the application processes data through a simple ETL pipeline:
 
-1.  **Extract**: Data is extracted from `202506_equity_hd.xlsx`.
+1.  **Extract**: Data is extracted from `data/202506_equity_hd.xlsx`.
 2.  **Transform**:
     -   Timestamps are converted to datetime format.
     -   Assets are categorised into types (Cash, Investments, Pensions).
     -   Data is aggregated to ensure one entry per platform-asset per month.
+    -   Month-over-Month and Year-to-Date changes are calculated.
 3.  **Load**: Processed data is cached for performance and used to generate metrics and visualizations on demand.
 
 ## Project Structure
 
--   `Home.py`: The main landing page for the application.
--   `pages/`: Directory containing the individual dashboard pages (Overview, Cash, Investments, Pensions, All Assets, Cars).
--   `utils/`: General utility modules for the main financial dashboards.
--   `utils/car/`: Utility modules specific to the Car Equity Tracker.
--   `car_equity_development_plan.md`: The detailed development plan for the car equity feature.
--   `requirements.txt`: Python package dependencies.
+```
+fintracker-v1/
+├── Home.py                 # Main landing page
+├── pages/                  # Dashboard pages
+│   ├── 1_Overview.py      # Portfolio overview with summary cards
+│   ├── 2_Cash.py          # Cash assets dashboard
+│   ├── 3_Investments.py   # Investment assets dashboard
+│   ├── 4_Pensions.py      # Pension assets dashboard
+│   ├── 6_Cars.py          # Car equity tracker
+│   └── 7_Card_Demo.py     # Card component demonstration
+├── utils/                  # Utility modules
+│   ├── __init__.py        # Module exports
+│   ├── metrics.py         # Financial metrics calculations
+│   ├── visualizations.py  # Card components and charts
+│   ├── design_tokens.py   # Design system constants
+│   ├── data_loader.py     # Data loading and processing
+│   └── car/               # Car-specific utilities
+│       ├── car_metrics.py      # Car financial calculations
+│       ├── car_forecasting.py  # Depreciation and cost forecasting
+│       └── car_data_manager.py # Car data file management
+├── data/                  # Data files (gitignored)
+└── requirements.txt       # Python dependencies
+```
 
 ## Development Roadmap
 
@@ -90,6 +134,8 @@ For the main financial assets, the application processes data through a simple E
 
 -   **Multi-page Application Refactor**: The application has been successfully restructured into a modern, multi-page Streamlit app.
 -   **Car Equity Tracker**: A comprehensive module for tracking vehicle finance, costs, and equity has been implemented.
+-   **Card Component System**: Reusable card components with consistent styling and HTML escaping.
+-   **Design System**: Centralized design tokens and consistent UI patterns.
 
 ### Future Work
 
@@ -114,6 +160,13 @@ For the main financial assets, the application processes data through a simple E
 ## Contributing
 
 Contributions are welcome. Please submit a Pull Request.
+
+### Development Guidelines
+
+- Follow the established card component patterns for new metric displays
+- Use the design tokens from `utils/design_tokens.py` for consistent styling
+- Add concise, meaningful comments to important logic in utility functions
+- Ensure all user-facing text is properly HTML-escaped
 
 ## License
 
