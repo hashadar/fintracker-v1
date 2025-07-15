@@ -154,6 +154,31 @@ Z_INDEX_POPOVER = "1060"
 Z_INDEX_TOOLTIP = "1070"
 
 # =============================================================================
+# CHART CONFIGURATION TOKENS
+# =============================================================================
+
+# Chart Template
+CHART_TEMPLATE = "plotly_white"
+
+# Chart Typography
+CHART_FONT_FAMILY = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+CHART_FONT_SIZE = 12
+
+# Chart Dimensions
+CHART_HEIGHT = 400
+CHART_MARGIN = dict(l=50, r=50, t=50, b=50)
+
+# Chart Colors
+CHART_GRID_COLOR = NEUTRAL_200
+CHART_AXIS_LINE_COLOR = NEUTRAL_300
+CHART_AXIS_LINE_WIDTH = 1
+CHART_GRID_WIDTH = 1
+
+# Chart Background
+CHART_PLOT_BGCOLOR = 'rgba(0,0,0,0)'
+CHART_PAPER_BGCOLOR = 'rgba(0,0,0,0)'
+
+# =============================================================================
 # CARD SPECIFIC TOKENS
 # =============================================================================
 
@@ -183,12 +208,12 @@ CARD_METRIC_LINE_HEIGHT = LINE_HEIGHT_TIGHT
 # Card Caption Styles
 CARD_CAPTION_FONT_SIZE = FONT_SIZE_XS
 CARD_CAPTION_COLOR = TEXT_TERTIARY
-CARD_CAPTION_MARGIN_TOP = SPACE_2
+CARD_CAPTION_MARGIN_TOP = SPACE_3
 
 # Card Change Styles
 CARD_CHANGE_FONT_SIZE = FONT_SIZE_SM
 CARD_CHANGE_FONT_WEIGHT = FONT_WEIGHT_SEMIBOLD
-CARD_CHANGE_MARGIN_TOP = SPACE_2
+CARD_CHANGE_MARGIN_TOP = SPACE_3
 
 # =============================================================================
 # COLOR UTILITY FUNCTIONS
@@ -199,10 +224,10 @@ def get_change_color(color_type: str) -> str:
     Get the appropriate color for change indicators.
     
     Args:
-        color_type: "normal" (positive), "inverse" (negative), or "neutral"
+        color_type (str): Type of color change ("normal", "inverse")
     
     Returns:
-        Hex color code
+        str: CSS color value
     """
     if color_type == "normal":
         return BRAND_SUCCESS
@@ -213,83 +238,148 @@ def get_change_color(color_type: str) -> str:
 
 def get_emphasis_color(color_name: str = "primary") -> str:
     """
-    Get emphasis color by name.
+    Get emphasis color based on name.
     
     Args:
-        color_name: "primary", "secondary", "success", "warning", "error", "info"
+        color_name (str): Color name ("primary", "success", "warning", "error", "info")
     
     Returns:
-        Hex color code
+        str: CSS color value
     """
-    emphasis_colors = {
+    color_map = {
         "primary": BRAND_PRIMARY,
-        "secondary": BRAND_SECONDARY,
         "success": BRAND_SUCCESS,
         "warning": BRAND_WARNING,
         "error": BRAND_ERROR,
         "info": BRAND_INFO
     }
-    return emphasis_colors.get(color_name, BRAND_PRIMARY)
+    return color_map.get(color_name, BRAND_PRIMARY)
 
 def get_background_gradient(color: str, opacity_start: str = "15", opacity_end: str = "08") -> str:
     """
-    Generate a gradient background string for emphasis cards.
+    Create a background gradient string.
     
     Args:
-        color: Base color hex code
-        opacity_start: Starting opacity percentage
-        opacity_end: Ending opacity percentage
+        color (str): Base color
+        opacity_start (str): Starting opacity percentage
+        opacity_end (str): Ending opacity percentage
     
     Returns:
-        CSS gradient string
+        str: CSS gradient string
     """
-    return f"linear-gradient(135deg, {color}{opacity_start}, {color}{opacity_end})"
+    return f"linear-gradient(135deg, {color}{opacity_start} 0%, {color}{opacity_end} 100%)"
 
 def get_border_color(color: str, opacity: str = "30") -> str:
     """
-    Generate a border color with opacity.
+    Create a border color with opacity.
     
     Args:
-        color: Base color hex code
-        opacity: Opacity percentage
+        color (str): Base color
+        opacity (str): Opacity percentage
     
     Returns:
-        Color with opacity
+        str: CSS color with opacity
     """
     return f"{color}{opacity}"
 
 # =============================================================================
-# STYLE UTILITY FUNCTIONS
+# CARD STYLE UTILITY FUNCTIONS
 # =============================================================================
 
 def get_card_base_styles() -> str:
-    """Get base styles for all cards."""
-    return f"background-color: {BACKGROUND_PRIMARY}; border: {CARD_BORDER_WIDTH_NORMAL} solid {BORDER_PRIMARY}; padding: {CARD_PADDING_MD}; border-radius: {BORDER_RADIUS_XL}; box-shadow: {SHADOW_MD}; text-align: center; margin-bottom: {SPACE_4}; transition: all {TRANSITION_NORMAL};"
+    """Get base card styles."""
+    return f"background: {BACKGROUND_PRIMARY}; border: {CARD_BORDER_WIDTH_NORMAL} solid {BORDER_PRIMARY}; border-radius: {BORDER_RADIUS_LG}; padding: {CARD_PADDING_MD}; box-shadow: {SHADOW_SM}; transition: {TRANSITION_NORMAL}; min-height: 120px; display: flex; flex-direction: column; justify-content: center;"
 
 def get_emphasis_card_styles(emphasis_color: str = BRAND_PRIMARY) -> str:
-    """Get styles for emphasis cards."""
-    return f"background: {get_background_gradient(emphasis_color)}; border: {CARD_BORDER_WIDTH_EMPHASIS} solid {get_border_color(emphasis_color)}; padding: {CARD_PADDING_MD}; border-radius: {BORDER_RADIUS_XL}; box-shadow: {SHADOW_LG}; text-align: center; margin-bottom: {SPACE_4}; transition: all {TRANSITION_NORMAL}; position: relative;"
+    """Get emphasis card styles."""
+    return f"background: {BACKGROUND_PRIMARY}; border: {CARD_BORDER_WIDTH_EMPHASIS} solid {emphasis_color}; border-radius: {BORDER_RADIUS_LG}; padding: {CARD_PADDING_MD}; box-shadow: {SHADOW_MD}; transition: {TRANSITION_NORMAL}; position: relative; min-height: 140px; display: flex; flex-direction: column; justify-content: center;"
 
 def get_card_title_styles() -> str:
-    """Get styles for card titles."""
-    return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {CARD_TITLE_FONT_WEIGHT}; color: {CARD_TITLE_COLOR}; margin-bottom: {SPACE_2}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; letter-spacing: {CARD_TITLE_LETTER_SPACING};"
+    """Get card title styles."""
+    return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {CARD_TITLE_FONT_WEIGHT}; color: {CARD_TITLE_COLOR}; letter-spacing: {CARD_TITLE_LETTER_SPACING}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; margin-bottom: {SPACE_3}; line-height: {LINE_HEIGHT_TIGHT};"
 
 def get_emphasis_card_title_styles(emphasis_color: str = BRAND_PRIMARY) -> str:
-    """Get styles for emphasis card titles."""
-    return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {FONT_WEIGHT_SEMIBOLD}; color: {emphasis_color}; margin-bottom: {SPACE_2}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; letter-spacing: {CARD_TITLE_LETTER_SPACING};"
+    """Get emphasis card title styles."""
+    return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {CARD_TITLE_FONT_WEIGHT}; color: {emphasis_color}; letter-spacing: {CARD_TITLE_LETTER_SPACING}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; margin-bottom: {SPACE_3}; line-height: {LINE_HEIGHT_TIGHT};"
 
 def get_card_metric_styles(font_size: str = CARD_METRIC_FONT_SIZE_SIMPLE) -> str:
-    """Get styles for card metrics."""
-    return f"font-size: {font_size}; font-weight: {CARD_METRIC_FONT_WEIGHT}; color: {CARD_METRIC_COLOR}; margin: {SPACE_2} 0; line-height: {CARD_METRIC_LINE_HEIGHT};"
+    """Get card metric styles."""
+    return f"font-size: {font_size}; font-weight: {CARD_METRIC_FONT_WEIGHT}; color: {CARD_METRIC_COLOR}; line-height: {CARD_METRIC_LINE_HEIGHT}; margin-bottom: {SPACE_3};"
 
 def get_card_caption_styles() -> str:
-    """Get styles for card captions."""
-    return f"font-size: {CARD_CAPTION_FONT_SIZE}; color: {CARD_CAPTION_COLOR}; margin-top: {CARD_CAPTION_MARGIN_TOP};"
+    """Get card caption styles."""
+    return f"font-size: {CARD_CAPTION_FONT_SIZE}; color: {CARD_CAPTION_COLOR}; margin-top: {CARD_CAPTION_MARGIN_TOP}; line-height: {LINE_HEIGHT_TIGHT};"
 
 def get_card_change_styles() -> str:
-    """Get styles for card change indicators."""
-    return f"font-size: {CARD_CHANGE_FONT_SIZE}; margin-top: {CARD_CHANGE_MARGIN_TOP};"
+    """Get card change styles."""
+    return f"font-size: {CARD_CHANGE_FONT_SIZE}; font-weight: {CARD_CHANGE_FONT_WEIGHT}; margin-top: {CARD_CHANGE_MARGIN_TOP}; line-height: {LINE_HEIGHT_TIGHT};"
 
 def get_emphasis_accent_bar(emphasis_color: str = BRAND_PRIMARY) -> str:
-    """Get styles for the top accent bar on emphasis cards."""
-    return f"position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, {emphasis_color}, {emphasis_color}80); border-radius: {BORDER_RADIUS_XL} {BORDER_RADIUS_XL} 0 0;" 
+    """Get emphasis accent bar styles."""
+    return f"position: absolute; top: 0; left: 0; right: 0; height: 4px; background: {emphasis_color}; border-radius: {BORDER_RADIUS_LG} {BORDER_RADIUS_LG} 0 0;"
+
+# =============================================================================
+# GLOBAL STYLES
+# =============================================================================
+
+CUSTOM_STYLE = f"""
+    <style>
+    .main {{
+        padding: 2rem;
+    }}
+    div[data-testid="stMetricValue"] {{
+        font-size: 1.5rem;
+        font-weight: bold;
+    }}
+    div[data-testid="stMetricLabel"] {{
+        font-size: 1rem;
+        font-weight: normal;
+    }}
+    div[data-testid="stMetricDelta"] {{
+        font-size: 1rem;
+    }}
+    div[data-testid="stMetricContainer"] {{
+        background-color: {BACKGROUND_PRIMARY};
+        border: 1px solid {BORDER_PRIMARY};
+        padding: 1rem;
+        border-radius: {BORDER_RADIUS_LG};
+        box-shadow: {SHADOW_SM};
+    }}
+    .asset-type-header {{
+        background-color: {BACKGROUND_PRIMARY};
+        padding: 1rem;
+        border-radius: {BORDER_RADIUS_LG};
+        margin: 1rem 0;
+        border: 1px solid {BORDER_PRIMARY};
+    }}
+    
+    /* Card spacing improvements */
+    .stMarkdown > div {{
+        margin-bottom: 1rem;
+    }}
+    
+    /* Ensure consistent card heights in grids */
+    [data-testid="column"] > div {{
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }}
+    
+    /* Consistent line height for card elements */
+    .stMarkdown > div > div {{
+        line-height: 1.2 !important;
+    }}
+    
+    /* Better vertical rhythm for card elements */
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        line-height: 1.2 !important;
+    }}
+    
+    .stMarkdown p {{
+        margin-bottom: 0.75rem;
+        line-height: 1.2 !important;
+    }}
+    </style>
+    """ 

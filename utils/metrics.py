@@ -20,6 +20,12 @@ def calculate_asset_type_metrics(df, asset_type):
     # Calculate total value for latest and previous month
     latest_df = type_df[type_df['Month'] == latest_month]
     prev_df = type_df[type_df['Month'] == prev_month] if pd.notna(prev_month) else None
+    
+    # Ensure Value column is numeric
+    latest_df['Value'] = pd.to_numeric(latest_df['Value'], errors='coerce')
+    if prev_df is not None:
+        prev_df['Value'] = pd.to_numeric(prev_df['Value'], errors='coerce')
+    
     latest_value = latest_df['Value'].sum()
     prev_value = prev_df['Value'].sum() if prev_df is not None else None
     
@@ -36,33 +42,6 @@ def calculate_asset_type_metrics(df, asset_type):
         'latest_platform_breakdown': latest_df.groupby('Platform')['Value'].sum().to_dict()  # Platform allocation
     }
     return metrics
-
-# --- Overall Metrics ---
-def calculate_overall_metrics(df):
-    """Calculate overall metrics for the dashboard (latest total, MoM change, etc.)."""
-    df = df.copy()
-    df['Month'] = df['Timestamp'].dt.to_period('M')
-    
-    # Get latest and previous month for portfolio-wide change calculations
-    latest_month = df['Month'].max()
-    prev_month = df[df['Month'] < latest_month]['Month'].max()
-    
-    latest_df = df[df['Month'] == latest_month]
-    prev_df = df[df['Month'] == prev_month] if pd.notna(prev_month) else None
-    
-    # Calculate total portfolio values
-    latest_total = latest_df['Value'].sum()
-    prev_total = prev_df['Value'].sum() if prev_df is not None else None
-    
-    # Calculate MoM percentage change for entire portfolio
-    mom_change = ((latest_total - prev_total) / prev_total * 100) if prev_total is not None else None
-    
-    return {
-        'latest_total': latest_total,
-        'mom_change': mom_change,
-        'latest_month': latest_month,
-        'unique_combinations': len(latest_df)  # Count of unique asset-platform combinations
-    }
 
 # --- Allocation, MoM, and YTD Metrics ---
 def calculate_allocation_metrics(df):

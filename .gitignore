@@ -159,6 +159,16 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Streamlit secrets and configuration
+.streamlit/secrets.toml
+.streamlit/config.toml
+
+# Google service account credentials
+*.json
+service-account-*.json
+google-credentials.json
+google-service-account.json
+
 # Financial data files
 *.xlsx
 *.xls

@@ -3,3 +3,8 @@ pandas
 numpy
 plotly
 openpyxl
+scipy
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2

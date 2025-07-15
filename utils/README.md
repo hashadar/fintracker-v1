@@ -1,7 +1,7 @@
 # Utility Modules
 
 This directory contains general utility modules that support the main financial dashboard application.
-For utilities specific to car equity tracking, please see [`utils/car/README.md`](car/README.md).
+~~For utilities specific to car equity tracking, please see [`utils/car/README.md`](car/README.md).~~ *Car functionality has been removed from this version.*
 
 ## Modules
 
@@ -31,7 +31,7 @@ Creates reusable visual components and charts for the dashboard:
 - **Chart Functions**: Plotly charts for time series, breakdowns, and data visualization
 - **HTML Escaping**: Automatic HTML escaping for all user-facing text to prevent injection
 
-### `design_tokens.py`
+### `design/` - Design System Module
 Defines the application's design system and styling constants:
 - **Color Palette**: Brand colors, neutral colors, success/error states
 - **Typography**: Font sizes, weights, line heights, letter spacing
@@ -73,7 +73,7 @@ complex_emphasis_card("Total Assets", "£75,000", "+3.1%", "+15.2%", "MoM | YTD"
 
 ## Design System
 
-The application uses a centralized design system defined in `design_tokens.py`:
+The application uses a centralized design system defined in `design/tokens.py`:
 
 - **Colors**: Brand primary, secondary, success, error, and neutral color palettes
 - **Typography**: Consistent font sizes from XS to 5XL with appropriate weights
@@ -83,7 +83,7 @@ The application uses a centralized design system defined in `design_tokens.py`:
 ### Style Functions
 
 ```python
-from utils.design_tokens import get_card_base_styles, get_change_color
+from utils.design.tokens import get_card_base_styles, get_change_color
 
 # Get pre-built styles for cards
 base_styles = get_card_base_styles()
@@ -97,7 +97,7 @@ These modules are imported and used by the main application (`Home.py`) and the 
 1. `data_loader.py` is used for initial loading, saving, and filtering of the main financial data.
 2. `metrics.py` provides the calculation engine for financial metrics displayed on the dashboard.
 3. `visualizations.py` supplies tools for creating consistent charts and card components.
-4. `design_tokens.py` provides the design system and styling constants.
+4. `design/tokens.py` provides the design system and styling constants.
 5. `constants.py` centralises shared configurations and static values.
 
 ## Data Flow Example (Main Data)
@@ -107,7 +107,7 @@ These modules are imported and used by the main application (`Home.py`) and the 
 3. Relevant subsets of data are passed to page modules (e.g., `pages/cash.py`).
 4. Page modules use `metrics.py` to calculate necessary financial figures for display.
 5. `visualizations.py` is then used to generate charts and card components based on these metrics.
-6. `design_tokens.py` provides consistent styling throughout this process.
+6. `design/tokens.py` provides consistent styling throughout this process.
 7. `constants.py` provides underlying definitions (like asset types) used throughout the application.
 
 ## Best Practices
