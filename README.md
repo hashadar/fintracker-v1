@@ -1,10 +1,12 @@
-# FinTracker
+# FinTracker v1.1.0
 
 A financial dashboard and analytics application built with Streamlit for tracking and analyzing personal financial assets.
 
 ## Overview
 
 FinTracker is a financial dashboard that provides insights into your financial portfolio. The application connects to Google Sheets to load your financial data and automatically categorizes assets into Cash, Investments, and Pensions.
+
+**All configuration, chart styling, and validation are now fully centralized and standardized for maintainability and safety.**
 
 ## Current Features
 
@@ -16,6 +18,7 @@ FinTracker is a financial dashboard that provides insights into your financial p
 - **Performance Metrics**: Returns, volatility, drawdown, and other financial metrics
 - **Modular Architecture**: Clean, maintainable codebase with reusable components
 - **Design System**: Consistent UI with centralized design tokens and card components
+- **Centralized Configuration & Validation**: All business logic, formatting, and chart styling are managed in config and design tokens, with automatic validation on startup
 
 ## Architecture
 
@@ -32,7 +35,11 @@ utils/
 │   ├── wrappers.py  # Chart wrapper functions
 │   ├── formatting.py # Axis and data formatting
 │   └── asset_types.py # Asset-specific charts
-└── metrics.py       # Financial calculations
+├── etl/             # Data loading and asset classification
+│   ├── data_loader.py
+│   └── asset_classifier.py
+├── data_processing.py # Data processing utilities
+└── config.py        # Centralized configuration constants
 ```
 
 ## Data Structure
@@ -77,11 +84,12 @@ The application expects Google Sheets data with these columns:
 
 ## Development
 
-The codebase has been refactored for maintainability and consistency:
+The codebase is fully standardized:
 
 - **Design System**: Centralized design tokens and reusable UI components
 - **Chart System**: Modular chart creation with wrapper functions for common patterns
 - **Layout Components**: Consistent page layouts across all dashboard pages
+- **Configuration & Validation**: All business logic, formatting, and chart styling are managed in config and design tokens, with automatic validation
 - **Code Organization**: Clean separation of concerns with dedicated modules
 
 ## License

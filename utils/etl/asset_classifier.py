@@ -2,13 +2,14 @@
 
 import pandas as pd
 import re
+from ..config import ASSET_TYPES, ASSET_SUBTYPES
 
 def get_asset_classification_rules():
     """Get the rules for classifying assets into different asset types."""
     
     # Define classification rules based primarily on asset names and patterns
     classification_rules = {
-        'Cash': {
+        ASSET_TYPES['CASH']: {
             'exact_matches': [
                 'GBP', 'USD', 'EUR', 'Cash', 'Current Account', 'Savings Account',
                 'Checking Account', 'Money Market', 'Liquid', 'Instant Access',
@@ -21,7 +22,7 @@ def get_asset_classification_rules():
             ],
             'platforms': ['HSBC', 'Wise', 'Revolut', 'Monzo', 'Starling', 'Barclays', 'Santander']
         },
-        'Pensions': {
+        ASSET_TYPES['PENSIONS']: {
             'exact_matches': [
                 'Pension', 'SIPP', 'Retirement', '401k', 'IRA', 'Roth IRA',
                 'Workplace Pension', 'Personal Pension', 'Defined Benefit',
@@ -34,7 +35,7 @@ def get_asset_classification_rules():
             ],
             'platforms': ['Wahed', 'Standard Life', 'Aviva', 'Scottish Widows', 'Legal & General', 'NEST']
         },
-        'Investments': {
+        ASSET_TYPES['INVESTMENTS']: {
             'exact_matches': [
                 'Stock', 'ETF', 'Mutual Fund', 'Bond', 'Crypto', 'Bitcoin', 'Ethereum',
                 'Index Fund', 'Equity', 'Shares', 'Commodity', 'Real Estate', 'Property',
@@ -70,7 +71,7 @@ def classify_asset_types(df):
     df = df.copy()
     
     # Initialize Asset_Type column
-    df['Asset_Type'] = 'Other'
+    df['Asset_Type'] = ASSET_TYPES['OTHER']
     
     # Get classification rules
     rules = get_asset_classification_rules()
@@ -90,7 +91,7 @@ def classify_asset_types(df):
                 df.loc[pattern_mask, 'Asset_Type'] = asset_type
     
     # Use Platform as secondary classification for unclassified assets
-    unclassified_mask = df['Asset_Type'] == 'Other'
+    unclassified_mask = df['Asset_Type'] == ASSET_TYPES['OTHER']
     if unclassified_mask.any():
         for asset_type, rule_set in rules.items():
             if 'platforms' in rule_set:
@@ -102,19 +103,19 @@ def classify_asset_types(df):
     crypto_patterns = [r'\b(btc|eth|ada|dot|sol|bnb|usdt|usdc)\b']
     for pattern in crypto_patterns:
         crypto_mask = df['Asset'].str.contains(pattern, case=False, na=False, regex=True)
-        df.loc[crypto_mask, 'Asset_Type'] = 'Investments'
+        df.loc[crypto_mask, 'Asset_Type'] = ASSET_TYPES['INVESTMENTS']
     
     # Stock/ETF patterns
     stock_patterns = [r'\b(inc|corp|ltd|plc|co|company|stock|shares)\b']
     for pattern in stock_patterns:
         stock_mask = df['Asset'].str.contains(pattern, case=False, na=False, regex=True)
-        df.loc[stock_mask, 'Asset_Type'] = 'Investments'
+        df.loc[stock_mask, 'Asset_Type'] = ASSET_TYPES['INVESTMENTS']
     
     # Currency patterns
     currency_patterns = [r'\b(gbp|usd|eur|gbp|pound|dollar|euro)\b']
     for pattern in currency_patterns:
         currency_mask = df['Asset'].str.contains(pattern, case=False, na=False, regex=True)
-        df.loc[currency_mask, 'Asset_Type'] = 'Cash'
+        df.loc[currency_mask, 'Asset_Type'] = ASSET_TYPES['CASH']
     
     return df
 
@@ -173,11 +174,11 @@ def validate_asset_classification(df):
     
     validation_results = {
         'total_assets': len(df),
-        'classified_assets': len(df[df['Asset_Type'] != 'Other']),
-        'unclassified_assets': len(df[df['Asset_Type'] == 'Other']),
-        'classification_rate': len(df[df['Asset_Type'] != 'Other']) / len(df) * 100,
+        'classified_assets': len(df[df['Asset_Type'] != ASSET_TYPES['OTHER']]),
+        'unclassified_assets': len(df[df['Asset_Type'] == ASSET_TYPES['OTHER']]),
+        'classification_rate': len(df[df['Asset_Type'] != ASSET_TYPES['OTHER']]) / len(df) * 100,
         'asset_type_distribution': df['Asset_Type'].value_counts().to_dict(),
-        'unclassified_assets_list': df[df['Asset_Type'] == 'Other'][['Asset', 'Platform']].to_dict('records'),
+        'unclassified_assets_list': df[df['Asset_Type'] == ASSET_TYPES['OTHER']][['Asset', 'Platform']].to_dict('records'),
         'recommendations': []
     }
     
@@ -193,7 +194,7 @@ def validate_asset_classification(df):
         )
     
     # Check for unusual classifications
-    for asset_type in ['Cash', 'Investments', 'Pensions']:
+    for asset_type in [ASSET_TYPES['CASH'], ASSET_TYPES['INVESTMENTS'], ASSET_TYPES['PENSIONS']]:
         if asset_type not in validation_results['asset_type_distribution']:
             validation_results['recommendations'].append(
                 f"No assets classified as {asset_type} - verify classification rules"

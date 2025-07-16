@@ -4,11 +4,14 @@ import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
 from utils.charts.base import create_time_series_chart, create_area_chart
+from utils.charts.formatting import get_chart_label
+from utils.data_processing import filter_by_asset_type, get_latest_month_data, get_monthly_aggregation, create_platform_trends_data
 from utils.design.tokens import (
     NEUTRAL_500,
-    CHART_TEMPLATE, CHART_FONT_FAMILY, CHART_FONT_SIZE, CHART_HEIGHT,
-    CHART_MARGIN, CHART_PLOT_BGCOLOR, CHART_PAPER_BGCOLOR
+    CHART_TEMPLATE, CHART_FONT_FAMILY, CHART_FONT_SIZE, CHART_HEIGHT, CHART_MARGIN,
+    CHART_PLOT_BGCOLOR, CHART_PAPER_BGCOLOR
 )
+from ..config import ASSET_TYPES
 
 def create_asset_type_time_series(df, asset_type):
     """
@@ -21,7 +24,7 @@ def create_asset_type_time_series(df, asset_type):
     Returns:
         tuple: (line_chart, area_chart) - both are valid Figure objects
     """
-    type_df = df[df['Asset_Type'] == asset_type]
+    type_df = filter_by_asset_type(df, asset_type)
     if type_df.empty:
         # Return empty figures with messages
         line_fig = go.Figure()
@@ -58,17 +61,8 @@ def create_asset_type_time_series(df, asset_type):
         
         return line_fig, area_fig
     
-    # Prepare data
-    type_df = type_df.copy()
-    type_df['Month'] = type_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
-    
-    # Monthly values by platform
-    platform_trends = type_df.pivot_table(
-        index='Month',
-        columns='Platform',
-        values='Value',
-        aggfunc='sum'
-    ).reset_index()
+    # Prepare data using new data processing component
+    platform_trends = create_platform_trends_data(type_df)
     
     if platform_trends.empty or len(platform_trends.columns) < 2:
         # Return empty figures with messages
@@ -113,14 +107,18 @@ def create_asset_type_time_series(df, asset_type):
         platform_trends,
         x_col='Month',
         y_cols=y_cols,
-        title=f'{asset_type} - Monthly Values by Platform'
+        x_label=get_chart_label('month'),
+        y_label=get_chart_label('value'),
+        y_format='currency'
     )
     
     area_chart = create_area_chart(
         platform_trends,
         x_col='Month',
         y_cols=y_cols,
-        title=f'{asset_type} - Platform Composition Over Time'
+        x_label=get_chart_label('month'),
+        y_label=get_chart_label('value'),
+        y_format='currency'
     )
     
     return line_chart, area_chart
@@ -136,7 +134,7 @@ def create_asset_type_breakdown(df, asset_type):
     Returns:
         tuple: (platform_chart, asset_chart) - both are valid Figure objects
     """
-    type_df = df[df['Asset_Type'] == asset_type]
+    type_df = filter_by_asset_type(df, asset_type)
     if type_df.empty:
         # Return empty figures with messages
         platform_fig = go.Figure()
@@ -173,9 +171,8 @@ def create_asset_type_breakdown(df, asset_type):
         
         return platform_fig, asset_fig
     
-    # Get latest month data
-    latest_month = type_df['Timestamp'].dt.to_period('M').max()
-    latest_data = type_df[type_df['Timestamp'].dt.to_period('M') == latest_month]
+    # Get latest month data using new data processing component
+    latest_data = get_latest_month_data(type_df)
     
     if latest_data.empty:
         # Return empty figures with messages

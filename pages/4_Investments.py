@@ -4,10 +4,24 @@ import plotly.graph_objs as go
 import pandas as pd
 from utils import (
     load_data,
-    calculate_asset_type_metrics
+    calculate_asset_type_metrics,
+    filter_by_asset_type,
+    get_latest_month_data,
+    get_monthly_aggregation,
+    calculate_rolling_metrics,
+    calculate_drawdown,
+    get_performance_metrics,
+    get_asset_breakdown,
+    ASSET_TYPES,
+    CURRENCY_FORMAT,
+    DISPLAY_DATE_FORMAT,
+    SHORT_DATE_FORMAT
 )
 from utils.design.cards import simple_card, complex_emphasis_card, complex_card, emphasis_card
-from utils.charts import create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, create_asset_type_time_series, create_asset_type_breakdown
+from utils.charts import (
+    create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, get_chart_label,
+    create_asset_type_time_series
+)
 from utils.design.tokens import (
     BRAND_PRIMARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO
 )
@@ -20,8 +34,8 @@ st.set_page_config(page_title="Investments - FinTracker", layout="wide")
 df = load_data()
 
 if df is not None and not df.empty:
-    # Filter for investment assets
-    investment_df = df[df['Asset_Type'] == 'Investments'].copy()
+    # Filter for investment assets using new data processing component
+    investment_df = filter_by_asset_type(df, ASSET_TYPES['INVESTMENTS'])
     
     if not investment_df.empty:
         create_page_header(
@@ -30,13 +44,14 @@ if df is not None and not df.empty:
         )
         
         # Calculate investment-specific metrics
-        investment_metrics = calculate_asset_type_metrics(df, 'Investments')
+        investment_metrics = calculate_asset_type_metrics(df, ASSET_TYPES['INVESTMENTS'])
         
-        # Get latest month for display
-        latest_month = investment_df['Timestamp'].dt.to_period('M').max()
+        # Get latest month for display using new data processing component
+        latest_data = get_latest_month_data(investment_df)
+        latest_month = latest_data['Timestamp'].dt.to_period('M').max() if not latest_data.empty else None
         
         # Display time period info
-        st.caption(f"📅 Latest Month: {latest_month.strftime('%B %Y')}")
+        st.caption(f"📅 Latest Month: {latest_month.strftime(DISPLAY_DATE_FORMAT)}")
         
         # --- Investment Summary Cards ---
         create_section_header("Investment Portfolio Summary", icon="🎯")
@@ -44,7 +59,7 @@ if df is not None and not df.empty:
         # Main investment total card
         complex_emphasis_card(
             title="Total Investment Portfolio",
-            metric=f"£{investment_metrics['latest_value']:,.2f}",
+            metric=CURRENCY_FORMAT.format(investment_metrics['latest_value']),
             mom_change=(f"{investment_metrics['mom_change']:+.2f}%" if investment_metrics['mom_change'] is not None else None),
             ytd_change=None,  # Will calculate YTD separately
             caption=f"Investment portfolio across {investment_metrics['platforms']} platforms",
@@ -91,16 +106,11 @@ if df is not None and not df.empty:
         # --- Performance Analytics ---
         create_section_header("Performance Analytics", icon="📊")
         
-        # Prepare data for performance analysis
-        investment_df['Month'] = investment_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
-        monthly_investments = investment_df.groupby('Month')['Value'].sum().reset_index()
-        monthly_investments['RollingAvg'] = monthly_investments['Value'].rolling(window=3).mean()
-        monthly_investments['RollingStd'] = monthly_investments['Value'].rolling(window=3).std()
+        # Prepare data for performance analysis using new data processing components
+        monthly_investments = get_monthly_aggregation(investment_df)
+        monthly_investments = calculate_rolling_metrics(monthly_investments, window=3)
         monthly_investments['MoM'] = monthly_investments['Value'].pct_change()
-        
-        # Calculate drawdown
-        running_max = monthly_investments['Value'].cummax()
-        monthly_investments['Drawdown'] = (monthly_investments['Value'] - running_max) / running_max
+        monthly_investments = calculate_drawdown(monthly_investments)
         
         # Performance metrics using metric grid
         max_drawdown = monthly_investments['Drawdown'].min()
@@ -112,7 +122,7 @@ if df is not None and not df.empty:
                 return lambda: simple_card(
                     title="Best Month",
                     metric=f"{best_month['MoM']:.2%}",
-                    caption=f"{best_month['Month'].strftime('%b %Y')}"
+                    caption=f"{best_month['Month'].strftime(SHORT_DATE_FORMAT)}"
                 )
             else:
                 return lambda: simple_card(
@@ -127,7 +137,7 @@ if df is not None and not df.empty:
                 return lambda: simple_card(
                     title="Worst Month",
                     metric=f"{worst_month['MoM']:.2%}",
-                    caption=f"{worst_month['Month'].strftime('%b %Y')}"
+                    caption=f"{worst_month['Month'].strftime(SHORT_DATE_FORMAT)}"
                 )
             else:
                 return lambda: simple_card(
@@ -157,8 +167,10 @@ if df is not None and not df.empty:
             fig_value = create_time_series_chart(
                 monthly_investments, 
                 x_col='Month', 
-                y_cols=['Value', 'RollingAvg'],
-                title="Investment Portfolio Value"
+                y_cols=['Value', 'Rolling_3M_Avg'],
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('value'),
+                y_format='currency'
             )
             if fig_value:
                 st.plotly_chart(fig_value, use_container_width=True)
@@ -170,12 +182,12 @@ if df is not None and not df.empty:
                 fig_returns = create_histogram(
                     mom_clean, 
                     x_col='MoM',
-                    title="Monthly Returns Distribution",
+                    x_label=get_chart_label('percentage_change'),
+                    y_label=get_chart_label('frequency'),
+                    x_format='percentage',
                     nbins=10
                 )
-                if fig_returns:
-                    fig_returns.update_xaxes(tickformat='.2%')
-                    st.plotly_chart(fig_returns, use_container_width=True)
+                st.plotly_chart(fig_returns, use_container_width=True)
             else:
                 st.info("Not enough data for returns distribution")
         
@@ -188,10 +200,10 @@ if df is not None and not df.empty:
                 monthly_investments, 
                 x_col='Month', 
                 y_cols=['Drawdown'],
-                title="Drawdown Over Time"
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('drawdown'),
+                y_format='percentage'
             )
-            if fig_drawdown:
-                fig_drawdown.update_yaxes(tickformat='.2%')
             st.plotly_chart(fig_drawdown, use_container_width=True)
         
         def create_volatility_chart():
@@ -199,11 +211,12 @@ if df is not None and not df.empty:
             fig_vol = create_time_series_chart(
                 monthly_investments, 
                 x_col='Month', 
-                y_cols=['RollingStd'],
-                title="Rolling Volatility (3-Month)"
+                y_cols=['Rolling_3M_Std'],
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('volatility'),
+                y_format='percentage'
             )
-            if fig_vol:
-                st.plotly_chart(fig_vol, use_container_width=True)
+            st.plotly_chart(fig_vol, use_container_width=True)
         
         create_chart_grid([create_drawdown_chart, create_volatility_chart], cols=2)
         
@@ -213,10 +226,8 @@ if df is not None and not df.empty:
         create_section_header("Platform Analysis", icon="🏦")
         
         # Platform distribution using chart grid
-        platform_breakdown = pd.DataFrame([
-            {'Platform': platform, 'Value': value}
-            for platform, value in investment_metrics['latest_platform_breakdown'].items()
-        ])
+        latest_investment_data = get_latest_month_data(investment_df)
+        platform_breakdown = get_asset_breakdown(latest_investment_data, 'platform')
         
         def create_platform_pie_chart():
             st.markdown("**Current Platform Distribution**")
@@ -224,11 +235,9 @@ if df is not None and not df.empty:
                 fig_platform = create_pie_chart(
                     platform_breakdown,
                     names_col='Platform',
-                    values_col='Value',
-                    title="Current Platform Distribution"
+                    values_col='Value'
                 )
-                if fig_platform:
-                    st.plotly_chart(fig_platform, use_container_width=True)
+                st.plotly_chart(fig_platform, use_container_width=True)
             else:
                 st.info("No platform data available")
         
@@ -239,10 +248,10 @@ if df is not None and not df.empty:
                     platform_breakdown,
                     x_col='Platform',
                     y_col='Value',
-                    title="Platform Values"
+                    x_label=get_chart_label('asset_name'),
+                    y_label=get_chart_label('value')
                 )
-                if fig_platform_bar:
-                    st.plotly_chart(fig_platform_bar, use_container_width=True)
+                st.plotly_chart(fig_platform_bar, use_container_width=True)
             else:
                 st.info("No platform data available")
         
@@ -250,7 +259,7 @@ if df is not None and not df.empty:
         
         # Platform performance over time
         st.markdown("**Platform Performance Over Time**")
-        fig_value, fig_composition = create_asset_type_time_series(df, 'Investments')
+        fig_value, fig_composition = create_asset_type_time_series(df, ASSET_TYPES['INVESTMENTS'])
         
         if fig_value is not None:
             def create_investment_values_chart():
@@ -270,6 +279,10 @@ if df is not None and not df.empty:
         # --- Asset Allocation Analysis ---
         create_section_header("Asset Allocation Analysis", icon="🏗️")
         
+        # Ensure 'Month' column exists before using it
+        if 'Month' not in investment_df.columns:
+            investment_df['Month'] = investment_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
+
         # Asset breakdown (if Asset column exists)
         if 'Asset' in investment_df.columns:
             latest_investment_data = investment_df[investment_df['Month'] == latest_month]
@@ -281,11 +294,9 @@ if df is not None and not df.empty:
                     fig_asset = create_pie_chart(
                         asset_breakdown,
                         names_col='Asset',
-                        values_col='Value',
-                        title="Current Asset Distribution"
+                        values_col='Value'
                     )
-                    if fig_asset:
-                        st.plotly_chart(fig_asset, use_container_width=True)
+                    st.plotly_chart(fig_asset, use_container_width=True)
                 else:
                     st.info("No asset data available")
             
@@ -297,11 +308,10 @@ if df is not None and not df.empty:
                         asset_platform_breakdown,
                         x_col='Platform',
                         y_col='Value',
-                        color_col='Asset',
-                        title="Asset Values by Platform"
+                        x_label=get_chart_label('asset_name'),
+                        y_label=get_chart_label('value')
                     )
-                    if fig_asset_platform:
-                        st.plotly_chart(fig_asset_platform, use_container_width=True)
+                    st.plotly_chart(fig_asset_platform, use_container_width=True)
                 else:
                     st.info("No asset-platform data available")
             
@@ -320,7 +330,9 @@ if df is not None and not df.empty:
                     asset_pivot,
                     x_col='Month',
                     y_cols=unique_assets.tolist(),
-                    title="Asset Performance Over Time"
+                    x_label=get_chart_label('month'),
+                    y_label=get_chart_label('value'),
+                    y_format='currency'
                 )
                 if fig_asset_time:
                     st.plotly_chart(fig_asset_time, use_container_width=True)
@@ -451,7 +463,7 @@ if df is not None and not df.empty:
     
     else:
         st.error("❌ No investment data found in your portfolio.")
-        st.info("💡 Make sure your data includes assets classified as 'Investments' type.")
+        st.info(f"💡 Make sure your data includes assets classified as '{ASSET_TYPES['INVESTMENTS']}' type.")
 
 else:
     st.error("❌ Data could not be loaded. Please check your data file.")

@@ -1,49 +1,32 @@
-# Utility Modules
+# Utility Modules v1.1.0
 
 This directory contains general utility modules that support the main financial dashboard application.
-~~For utilities specific to car equity tracking, please see [`utils/car/README.md`](car/README.md).~~ *Car functionality has been removed from this version.*
+
+**All configuration, chart styling, and validation are now fully centralized and standardized.**
 
 ## Modules
 
-### `data_loader.py`
-Handles loading and preprocessing for the main financial dataset:
-- Loads financial data from the primary Excel file (e.g., `202506_equity_hd.xlsx`).
-- Converts timestamps to datetime format.
-- Categorises assets based on predefined types (Cash, Investments, Pensions).
-- Ensures data integrity, for instance, by handling potential duplicate entries for the same asset on the same date.
-- Provides date range filtering functions for the main dataset.
-- Handles saving updated data back to the primary Excel file.
+### `etl/`
+- `data_loader.py`: Loads and preprocesses financial data from Google Sheets
+- `asset_classifier.py`: Classifies assets by type and platform
 
-### `metrics.py`
-Calculates financial metrics and analytics for the main dataset:
-- **Asset type-specific metrics**: Latest value, month-over-month change, platform counts, asset counts, months tracked
-- **Overall portfolio metrics**: Total value, aggregate MoM/YTD changes, unique combinations count
-- **Allocation metrics**: Percentage breakdown by asset type, allocation changes over time, MoM/YTD increases
-- **Platform and asset breakdowns** within each asset type for detailed analysis
+### `data_processing.py`
+- Data processing utilities for filtering, aggregation, rolling metrics, drawdown, and performance calculations
 
-### `visualizations.py`
-Creates reusable visual components and charts for the dashboard:
-- **Card Components**: Four standardized card types for consistent metric display
-  - `simple_card`: Basic metric with title, value, and optional caption
-  - `emphasis_card`: Highlighted card for important metrics
-  - `complex_card`: Metric with MoM and YTD change indicators
-  - `complex_emphasis_card`: Emphasis card with change indicators
-- **Chart Functions**: Plotly charts for time series, breakdowns, and data visualization
-- **HTML Escaping**: Automatic HTML escaping for all user-facing text to prevent injection
+### `charts/`
+- `base.py`: Base chart functions (time series, bar, pie, area, etc.)
+- `wrappers.py`: Chart wrapper functions for common patterns
+- `formatting.py`: Axis and data formatting helpers
+- `asset_types.py`: Asset-specific chart functions
 
-### `design/` - Design System Module
-Defines the application's design system and styling constants:
-- **Color Palette**: Brand colors, neutral colors, success/error states
-- **Typography**: Font sizes, weights, line heights, letter spacing
-- **Spacing**: Consistent spacing values for margins, padding, and layout
-- **Card Styling**: Pre-built style functions for all card components
-- **Responsive Design**: Breakpoints and responsive layout tokens
+### `design/`
+- `cards.py`: Reusable card components
+- `components.py`: Layout components
+- `tokens.py`: Design tokens (colors, spacing, fonts, chart config)
 
-### `constants.py`
-Defines application-wide constants and configurations:
-- Predefined asset type categories (e.g., `ASSET_TYPES = ["Cash", "Investments", "Pensions"]`).
-- Custom CSS styling for the Streamlit dashboard for a consistent look and feel.
-- Default page configuration details like titles or shared descriptions.
+### `config.py`
+- Centralized configuration constants for asset types, business logic, formatting, and Google Sheets integration
+- Includes automatic configuration validation
 
 ## Card Component System
 
@@ -94,21 +77,22 @@ change_color = get_change_color("normal")  # Returns hex color for change indica
 
 These modules are imported and used by the main application (`Home.py`) and the various page modules in the `pages/` directory. Each module provides specific, reusable functionality:
 
-1. `data_loader.py` is used for initial loading, saving, and filtering of the main financial data.
-2. `metrics.py` provides the calculation engine for financial metrics displayed on the dashboard.
-3. `visualizations.py` supplies tools for creating consistent charts and card components.
-4. `design/tokens.py` provides the design system and styling constants.
-5. `constants.py` centralises shared configurations and static values.
+1. `etl/data_loader.py` is used for initial loading and filtering of the main financial data.
+2. `etl/asset_classifier.py` classifies assets by type and platform.
+3. `data_processing.py` provides the calculation engine for financial metrics and analytics.
+4. `charts/` supplies tools for creating consistent charts and formatting.
+5. `design/` provides the design system, card components, and layout utilities.
+6. `config.py` centralizes all configuration and validation.
 
 ## Data Flow Example (Main Data)
 
 1. Data is loaded and preprocessed by `data_loader.load_data()`.
 2. User interactions (e.g., date range selection) might trigger data refiltering via `data_loader` functions.
 3. Relevant subsets of data are passed to page modules (e.g., `pages/cash.py`).
-4. Page modules use `metrics.py` to calculate necessary financial figures for display.
-5. `visualizations.py` is then used to generate charts and card components based on these metrics.
+4. Page modules use `data_processing.py` to calculate necessary financial figures for display.
+5. `charts/` is then used to generate charts and card components based on these metrics.
 6. `design/tokens.py` provides consistent styling throughout this process.
-7. `constants.py` provides underlying definitions (like asset types) used throughout the application.
+7. `config.py` provides underlying definitions (like asset types) and validation used throughout the application.
 
 ## Best Practices
 

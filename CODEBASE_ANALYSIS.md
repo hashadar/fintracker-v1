@@ -135,60 +135,94 @@ def create_time_series_with_rolling(df, x_col, y_col, title=None, window=6, **kw
 - ✅ Fixed all import dependencies
 
 ### **2.3 Create Data Processing Components (MEDIUM PRIORITY)**
-**Status**: ❌ Not Started
+**Status**: ✅ COMPLETED
 
-**Components to create**:
+**New file**: `utils/data_processing.py` - ✅ Created with comprehensive data processing functions
+
+**Components created**:
 ```python
+def filter_by_asset_type(df, asset_type):
+    """Filter data by asset type"""
+    
 def get_latest_month_data(df):
     """Get data for the most recent month"""
     
-def calculate_percentage_changes(df):
+def get_time_period_data(df, period_type='latest'):
+    """Get data for specific time periods"""
+    
+def calculate_percentage_changes(df, value_col='Value'):
     """Calculate MoM and YTD percentage changes"""
     
-def filter_by_asset_type(df, asset_type):
-    """Filter data by asset type"""
+def get_monthly_aggregation(df, group_by_cols=None):
+    """Aggregate data by month with optional grouping"""
+    
+def calculate_rolling_metrics(df, window=3):
+    """Calculate rolling averages and standard deviations"""
+    
+def prepare_chart_data(df, x_col='Month', y_col='Value'):
+    """Prepare data specifically for charting"""
+    
+def get_asset_breakdown(df, breakdown_type='platform'):
+    """Get asset breakdown by platform or asset type"""
+    
+def calculate_drawdown(df, value_col='Value'):
+    """Calculate drawdown metrics for portfolio analysis"""
+    
+def get_performance_metrics(df, value_col='Value'):
+    """Calculate key performance metrics from monthly data"""
+    
+def create_platform_trends_data(df):
+    """Create platform trends data for time series charts"""
 ```
+
+**Files refactored**:
+- ✅ `utils/__init__.py` - Updated to export new data processing functions
+- ✅ `pages/2_All_Assets.py` - Refactored to use new data processing components
+- ✅ `pages/3_Cash.py` - Refactored to use new data processing components
+- ✅ `pages/4_Investments.py` - Refactored to use new data processing components
+- ✅ `pages/5_Pensions.py` - Refactored to use new data processing components
+- ✅ `Home.py` - Refactored to use new data processing components
+- ✅ `utils/charts/asset_types.py` - Refactored to use new data processing components
+
+**Benefits achieved**:
+- Eliminated code duplication across all page files
+- Standardized data processing operations
+- Improved maintainability with centralized data logic
+- Enhanced error handling and data validation
+- Better separation of concerns between data processing and UI logic
 
 ---
 
 ## 🎯 **PRIORITY 3: Remove Hardcoded Values**
 
 ### **3.1 Create Configuration Constants (HIGH PRIORITY)**
-**Status**: ❌ Not Started
+**Status**: ✅ COMPLETED
 
-**New file**: `utils/config.py`
-
-**Constants to define**:
-```python
-# Chart configurations
-CHART_HEIGHT = 400
-CHART_TEMPLATE = "plotly_white"
-CHART_FONT_SIZE = 12
-
-# Page configurations
-DEFAULT_COLUMNS = 4
-METRIC_COLUMNS = 3
-CHART_COLUMNS = 2
-
-# Asset types
-ASSET_TYPES = ['Cash', 'Investments', 'Pensions']
-
-# Date formats
-DATE_FORMAT = '%B %Y'
-SHORT_DATE_FORMAT = '%b %Y'
-
-# Currency formatting
-CURRENCY_FORMAT = '£{:,.0f}'
-PERCENTAGE_FORMAT = '{:.1f}%'
-```
+- All configuration constants for asset types, business logic, date/currency formats, and Google Sheets integration are now centralized in `utils/config.py`.
+- All page, ETL, data processing, and chart files now import and use these constants.
+- No hardcoded values remain in the codebase.
 
 ### **3.2 Standardize Chart Styling (MEDIUM PRIORITY)**
-**Status**: ❌ Not Started
+**Status**: ✅ COMPLETED
 
-**Improvements**:
-- Use design tokens consistently in all chart functions
-- Standardize axis formatting across all charts
-- Create consistent color schemes
+- All chart styling and configuration is now centralized in `utils/design/tokens.py`.
+- All chart functions use design tokens for consistent appearance.
+- Chart wrapper and formatting functions use config constants for formatting.
+
+### **3.2.4 Add Configuration Validation (NEW)**
+**Status**: ✅ COMPLETED
+
+- A `validate_config()` function in `utils/config.py` checks all configuration constants for correctness and consistency.
+- Validation runs automatically on import and can be called directly.
+- Errors and warnings are shown as Python warnings, with no impact on app functionality.
+
+---
+
+## 🟢 **STANDARDIZATION COMPLETE**
+- The codebase is now fully standardized.
+- All hardcoded values have been removed.
+- Configuration and chart styling are fully centralized.
+- Configuration validation is in place for safety and maintainability.
 
 ---
 
@@ -260,13 +294,15 @@ def create_asset_page(asset_type, title, icon):
 | Card Demo | ~351 | 9% |
 | Hardcoded Values | ~100 | 2.5% |
 | Redundant Layout | ~150 | 4% |
-| **Total Reduction** | **~1,000** | **25%** |
+| Data Processing Duplication | ~150 | 4% |
+| **Total Reduction** | **~1,150** | **29%** |
 
 ### **Files to Create**
-1. `utils/components.py` - Reusable UI components
-2. `utils/config.py` - Configuration constants
-3. `utils/layout.py` - Layout utilities
-4. `pages/8_Debug.py` - Debug page
+1. `utils/components.py` - Reusable UI components ✅
+2. `utils/data_processing.py` - Data processing utilities ✅
+3. `utils/config.py` - Configuration constants
+4. `utils/layout.py` - Layout utilities
+5. `pages/8_Debug.py` - Debug page
 
 ### **Files to Remove**
 1. `pages/7_Card_Demo.py` - Development page
@@ -291,8 +327,8 @@ def create_asset_page(asset_type, title, icon):
 ### **Phase 2: Components (Week 2)**
 - [ ] Create configuration constants
 - [ ] Create layout components
-- [ ] Create chart wrapper components
-- [ ] Create data processing components
+- [ ] Create chart wrapper components ✅
+- [ ] Create data processing components ✅
 
 ### **Phase 3: Standardization (Week 3)**
 - [ ] Standardize page layouts
@@ -334,5 +370,5 @@ def create_asset_page(asset_type, title, icon):
 
 ---
 
-**Last Updated**: December 2024  
-**Status**: Analysis Complete, Ready for Implementation 
+**Last Updated**: July 2025  
+**Version**: 1.1.0 

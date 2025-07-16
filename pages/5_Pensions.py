@@ -4,10 +4,23 @@ import plotly.graph_objs as go
 import pandas as pd
 from utils import (
     load_data,
-    calculate_asset_type_metrics
+    calculate_asset_type_metrics,
+    filter_by_asset_type,
+    get_latest_month_data,
+    get_monthly_aggregation,
+    calculate_rolling_metrics,
+    get_performance_metrics,
+    get_asset_breakdown,
+    ASSET_TYPES,
+    CURRENCY_FORMAT,
+    DISPLAY_DATE_FORMAT,
+    SHORT_DATE_FORMAT
 )
 from utils.design.cards import simple_card, complex_emphasis_card, complex_card, emphasis_card
-from utils.charts import create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, create_asset_type_time_series, create_asset_type_breakdown
+from utils.charts import (
+    create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, get_chart_label,
+    create_asset_type_time_series
+)
 from utils.design.tokens import (
     BRAND_PRIMARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO
 )
@@ -20,8 +33,8 @@ st.set_page_config(page_title="Pensions - FinTracker", layout="wide")
 df = load_data()
 
 if df is not None and not df.empty:
-    # Filter for pension assets
-    pension_df = df[df['Asset_Type'] == 'Pensions'].copy()
+    # Filter for pension assets using new data processing component
+    pension_df = filter_by_asset_type(df, ASSET_TYPES['PENSIONS'])
     
     if not pension_df.empty:
         create_page_header(
@@ -30,13 +43,14 @@ if df is not None and not df.empty:
         )
         
         # Calculate pension-specific metrics
-        pension_metrics = calculate_asset_type_metrics(df, 'Pensions')
+        pension_metrics = calculate_asset_type_metrics(df, ASSET_TYPES['PENSIONS'])
         
-        # Get latest month for display
-        latest_month = pension_df['Timestamp'].dt.to_period('M').max()
+        # Get latest month for display using new data processing component
+        latest_data = get_latest_month_data(pension_df)
+        latest_month = latest_data['Timestamp'].dt.to_period('M').max() if not latest_data.empty else None
         
         # Display time period info
-        st.caption(f"📅 Latest Month: {latest_month.strftime('%B %Y')}")
+        st.caption(f"📅 Latest Month: {latest_month.strftime(DISPLAY_DATE_FORMAT)}")
         
         # --- Pension Summary Cards ---
         create_section_header("Pension Portfolio Summary", icon="🎯")
@@ -44,7 +58,7 @@ if df is not None and not df.empty:
         # Main pension total card
         complex_emphasis_card(
             title="Total Pension Portfolio",
-            metric=f"£{pension_metrics['latest_value']:,.2f}",
+            metric=CURRENCY_FORMAT.format(pension_metrics['latest_value']),
             mom_change=(f"{pension_metrics['mom_change']:+.2f}%" if pension_metrics['mom_change'] is not None else None),
             ytd_change=None,  # Will calculate YTD separately
             caption=f"Pension portfolio across {pension_metrics['platforms']} providers",
@@ -91,11 +105,9 @@ if df is not None and not df.empty:
         # --- Long-term Growth Analysis ---
         create_section_header("Long-term Growth Analysis", icon="📈")
         
-        # Prepare data for growth analysis
-        pension_df['Month'] = pension_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
-        monthly_pensions = pension_df.groupby('Month')['Value'].sum().reset_index()
-        monthly_pensions['RollingAvg'] = monthly_pensions['Value'].rolling(window=6).mean()  # 6-month average for pensions
-        monthly_pensions['RollingStd'] = monthly_pensions['Value'].rolling(window=6).std()
+        # Prepare data for growth analysis using new data processing components
+        monthly_pensions = get_monthly_aggregation(pension_df)
+        monthly_pensions = calculate_rolling_metrics(monthly_pensions, window=6)  # 6-month average for pensions
         monthly_pensions['MoM'] = monthly_pensions['Value'].pct_change()
         
         # Calculate cumulative growth
@@ -141,7 +153,7 @@ if df is not None and not df.empty:
                 return lambda: simple_card(
                     title="Best Month",
                     metric=f"{best_month['MoM']:.2%}",
-                    caption=f"{best_month['Month'].strftime('%b %Y')}"
+                    caption=f"{best_month['Month'].strftime(SHORT_DATE_FORMAT)}"
                 )
             else:
                 return lambda: simple_card(
@@ -156,7 +168,7 @@ if df is not None and not df.empty:
                 return lambda: simple_card(
                     title="Worst Month",
                     metric=f"{worst_month['MoM']:.2%}",
-                    caption=f"{worst_month['Month'].strftime('%b %Y')}"
+                    caption=f"{worst_month['Month'].strftime(SHORT_DATE_FORMAT)}"
                 )
             else:
                 return lambda: simple_card(
@@ -178,8 +190,10 @@ if df is not None and not df.empty:
             fig_value = create_time_series_chart(
                 monthly_pensions, 
                 x_col='Month', 
-                y_cols=['Value', 'RollingAvg'],
-                title="Pension Portfolio Value"
+                y_cols=['Value', 'Rolling_6M_Avg'],
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('value'),
+                y_format='currency'
             )
             if fig_value:
                 st.plotly_chart(fig_value, use_container_width=True)
@@ -191,10 +205,11 @@ if df is not None and not df.empty:
                     monthly_pensions, 
                     x_col='Month', 
                     y_cols=['CumulativeGrowthPct'],
-                    title="Cumulative Growth"
+                    x_label=get_chart_label('month'),
+                    y_label=get_chart_label('growth'),
+                    y_format='percentage'
                 )
                 if fig_growth:
-                    fig_growth.update_yaxes(tickformat='.1f')
                     st.plotly_chart(fig_growth, use_container_width=True)
             else:
                 st.info("Not enough data for cumulative growth")
@@ -210,12 +225,12 @@ if df is not None and not df.empty:
                     mom_clean,
                     x_col='Month',
                     y_col='MoM',
-                    title="Monthly Growth Rates"
+                    x_label=get_chart_label('month'),
+                    y_label=get_chart_label('percentage_change'),
+                    y_format='percentage'
                 )
-                if fig_mom:
-                    fig_mom.update_yaxes(tickformat='.2%')
-                    fig_mom.update_traces(marker_color=['green' if x >= 0 else 'red' for x in mom_clean['MoM']])
-                    st.plotly_chart(fig_mom, use_container_width=True)
+                fig_mom.update_traces(marker_color=['green' if x >= 0 else 'red' for x in mom_clean['MoM']])
+                st.plotly_chart(fig_mom, use_container_width=True)
             else:
                 st.info("Not enough data for monthly growth")
         
@@ -224,8 +239,10 @@ if df is not None and not df.empty:
             fig_vol = create_time_series_chart(
                 monthly_pensions, 
                 x_col='Month', 
-                y_cols=['RollingStd'],
-                title="Rolling Volatility (6-Month)"
+                y_cols=['Rolling_6M_Std'],
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('volatility'),
+                y_format='percentage'
             )
             if fig_vol:
                 st.plotly_chart(fig_vol, use_container_width=True)
@@ -238,19 +255,16 @@ if df is not None and not df.empty:
         create_section_header("Provider Analysis", icon="🏢")
         
         # Provider distribution using chart grid
-        provider_breakdown = pd.DataFrame([
-            {'Provider': provider, 'Value': value}
-            for provider, value in pension_metrics['latest_platform_breakdown'].items()
-        ])
+        latest_pension_data = get_latest_month_data(pension_df)
+        provider_breakdown = get_asset_breakdown(latest_pension_data, 'platform')
         
         def create_provider_pie_chart():
             st.markdown("**Current Provider Distribution**")
             if not provider_breakdown.empty:
                 fig_provider = create_pie_chart(
                     provider_breakdown,
-                    names_col='Provider',
-                    values_col='Value',
-                    title="Current Provider Distribution"
+                    names_col='Platform',
+                    values_col='Value'
                 )
                 if fig_provider:
                     st.plotly_chart(fig_provider, use_container_width=True)
@@ -262,9 +276,11 @@ if df is not None and not df.empty:
             if not provider_breakdown.empty:
                 fig_provider_bar = create_bar_chart(
                     provider_breakdown,
-                    x_col='Provider',
+                    x_col='Platform',
                     y_col='Value',
-                    title="Provider Values"
+                    x_label=get_chart_label('provider'),
+                    y_label=get_chart_label('value'),
+                    y_format='currency'
                 )
                 if fig_provider_bar:
                     st.plotly_chart(fig_provider_bar, use_container_width=True)
@@ -275,7 +291,7 @@ if df is not None and not df.empty:
         
         # Provider performance over time
         st.markdown("**Provider Performance Over Time**")
-        fig_value, fig_composition = create_asset_type_time_series(df, 'Pensions')
+        fig_value, fig_composition = create_asset_type_time_series(df, ASSET_TYPES['PENSIONS'])
         
         if fig_value is not None:
             def create_pension_values_chart():
@@ -363,8 +379,10 @@ if df is not None and not df.empty:
             fig_dist = create_histogram(
                 monthly_pensions,
                 x_col='Value',
-                title="Pension Value Distribution",
-                nbins=10
+                x_label=get_chart_label('value'),
+                y_label=get_chart_label('frequency'),
+                nbins=10,
+                x_format='currency'
             )
             if fig_dist:
                 st.plotly_chart(fig_dist, use_container_width=True)
@@ -373,15 +391,19 @@ if df is not None and not df.empty:
             st.markdown("**Monthly Growth Distribution**")
             mom_clean = monthly_pensions[['Month', 'MoM']].dropna()
             if not mom_clean.empty:
+                # Create histogram using the dedicated histogram function
                 fig_growth_dist = create_histogram(
                     mom_clean,
                     x_col='MoM',
-                    title="Monthly Growth Distribution",
-                    nbins=8
+                    x_label=get_chart_label('percentage_change'),
+                    y_label=get_chart_label('frequency'),
+                    nbins=8,
+                    x_format='percentage'
                 )
-                if fig_growth_dist:
-                    fig_growth_dist.update_xaxes(tickformat='.2%')
-                    st.plotly_chart(fig_growth_dist, use_container_width=True)
+                # Apply percentage formatting only to x-axis (the percentage values)
+                from utils.charts.formatting import format_percentage_axis
+                format_percentage_axis(fig_growth_dist, axis='x', decimals=2)
+                st.plotly_chart(fig_growth_dist, use_container_width=True)
             else:
                 st.info("Not enough data for growth distribution")
         
@@ -392,6 +414,10 @@ if df is not None and not df.empty:
         # --- Pension Scheme Analysis ---
         create_section_header("Pension Scheme Analysis", icon="📋")
         
+        # Ensure 'Month' column exists before using it
+        if 'Month' not in pension_df.columns:
+            pension_df['Month'] = pension_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
+
         # Scheme breakdown (if Asset column exists)
         if 'Asset' in pension_df.columns:
             latest_pension_data = pension_df[pension_df['Month'] == latest_month]
@@ -400,12 +426,10 @@ if df is not None and not df.empty:
                 st.markdown("**Current Scheme Distribution**")
                 scheme_breakdown = latest_pension_data.groupby('Asset')['Value'].sum().reset_index()
                 if not scheme_breakdown.empty:
-                    fig_scheme = px.pie(
+                    fig_scheme = create_pie_chart(
                         scheme_breakdown,
-                        values='Value',
-                        names='Asset',
-                        title=None,
-                        hole=0.3
+                        names_col='Asset',
+                        values_col='Value'
                     )
                     fig_scheme.update_traces(textposition='inside', textinfo='percent+label')
                     st.plotly_chart(fig_scheme, use_container_width=True)
@@ -416,13 +440,14 @@ if df is not None and not df.empty:
                 st.markdown("**Scheme Values by Provider**")
                 scheme_provider_breakdown = latest_pension_data.groupby(['Platform', 'Asset'])['Value'].sum().reset_index()
                 if not scheme_provider_breakdown.empty:
-                    fig_scheme_provider = px.bar(
+                    fig_scheme_provider = create_bar_chart(
                         scheme_provider_breakdown,
-                        x='Platform',
-                        y='Value',
-                        color='Asset',
-                        title=None,
-                        labels={'Value': 'Value (GBP)', 'Platform': 'Provider', 'Asset': 'Scheme'}
+                        x_col='Platform',
+                        y_col='Value',
+                        x_label=get_chart_label('provider'),
+                        y_label=get_chart_label('value'),
+                        color_col='Asset',
+                        y_format='currency'
                     )
                     st.plotly_chart(fig_scheme_provider, use_container_width=True)
                 else:
@@ -435,13 +460,13 @@ if df is not None and not df.empty:
             scheme_time_series = pension_df.groupby(['Month', 'Asset'])['Value'].sum().reset_index()
             
             if not scheme_time_series.empty:
-                fig_scheme_time = px.line(
+                fig_scheme_time = create_time_series_chart(
                     scheme_time_series,
-                    x='Month',
-                    y='Value',
-                    color='Asset',
-                    labels={'Value': 'Value (GBP)', 'Month': 'Month', 'Asset': 'Scheme'},
-                    title=None
+                    x_col='Month',
+                    y_cols=['Value'],
+                    x_label=get_chart_label('month'),
+                    y_label=get_chart_label('value'),
+                    y_format='currency'
                 )
                 st.plotly_chart(fig_scheme_time, use_container_width=True)
             else:
@@ -492,7 +517,7 @@ if df is not None and not df.empty:
     
     else:
         st.error("❌ No pension data found in your portfolio.")
-        st.info("💡 Make sure your data includes assets classified as 'Pensions' type.")
+        st.info(f"💡 Make sure your data includes assets classified as '{ASSET_TYPES['PENSIONS']}' type.")
 
 else:
     st.error("❌ Data could not be loaded. Please check your data file.")

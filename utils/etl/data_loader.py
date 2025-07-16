@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 from .asset_classifier import classify_asset_types
+from ..config import SHEET_NAME, DATE_COLUMN, AMOUNT_COLUMN, CATEGORY_COLUMN, DESCRIPTION_COLUMN
 
 # Google Sheets imports
 try:
@@ -55,7 +56,7 @@ def _load_from_google_sheets():
         spreadsheet = client.open_by_key(spreadsheet_id)
         
         # Get the first worksheet (or specify by name)
-        worksheet_name = google_config.get("worksheet_name", "Sheet1")
+        worksheet_name = google_config.get("worksheet_name", SHEET_NAME)
         try:
             worksheet = spreadsheet.worksheet(worksheet_name)
         except gspread.WorksheetNotFound:

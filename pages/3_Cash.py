@@ -4,10 +4,22 @@ import plotly.graph_objs as go
 import pandas as pd
 from utils import (
     load_data,
-    calculate_asset_type_metrics
+    calculate_asset_type_metrics,
+    filter_by_asset_type,
+    get_latest_month_data,
+    get_monthly_aggregation,
+    calculate_percentage_changes,
+    calculate_rolling_metrics,
+    get_asset_breakdown,
+    ASSET_TYPES,
+    CURRENCY_FORMAT,
+    DISPLAY_DATE_FORMAT
 )
 from utils.design.cards import simple_card, complex_emphasis_card, complex_card, emphasis_card
-from utils.charts import create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, create_box_plot, create_asset_type_time_series, create_asset_type_breakdown
+from utils.charts import (
+    create_time_series_chart, create_bar_chart, create_pie_chart, create_histogram, create_box_plot, get_chart_label,
+    create_asset_type_time_series
+)
 from utils.design.tokens import (
     BRAND_PRIMARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO
 )
@@ -20,8 +32,8 @@ st.set_page_config(page_title="Cash - FinTracker", layout="wide")
 df = load_data()
 
 if df is not None and not df.empty:
-    # Filter for cash assets
-    cash_df = df[df['Asset_Type'] == 'Cash'].copy()
+    # Filter for cash assets using new data processing component
+    cash_df = filter_by_asset_type(df, ASSET_TYPES['CASH'])
     
     if not cash_df.empty:
         create_page_header(
@@ -30,13 +42,14 @@ if df is not None and not df.empty:
         )
         
         # Calculate cash-specific metrics
-        cash_metrics = calculate_asset_type_metrics(df, 'Cash')
+        cash_metrics = calculate_asset_type_metrics(df, ASSET_TYPES['CASH'])
         
-        # Get latest month for display
-        latest_month = cash_df['Timestamp'].dt.to_period('M').max()
+        # Get latest month for display using new data processing component
+        latest_data = get_latest_month_data(cash_df)
+        latest_month = latest_data['Timestamp'].dt.to_period('M').max() if not latest_data.empty else None
         
         # Display time period info
-        st.caption(f"📅 Latest Month: {latest_month.strftime('%B %Y')}")
+        st.caption(f"📅 Latest Month: {latest_month.strftime(DISPLAY_DATE_FORMAT)}")
         
         # --- Cash Summary Cards ---
         create_section_header("Cash Position Summary", icon="💳")
@@ -44,7 +57,7 @@ if df is not None and not df.empty:
         # Main cash total card
         complex_emphasis_card(
             title="Total Cash Position",
-            metric=f"£{cash_metrics['latest_value']:,.2f}",
+            metric=CURRENCY_FORMAT.format(cash_metrics['latest_value']),
             mom_change=(f"{cash_metrics['mom_change']:+.2f}%" if cash_metrics['mom_change'] is not None else None),
             ytd_change=None,  # Cash doesn't typically have YTD growth like investments
             caption=f"Total liquid cash across {cash_metrics['platforms']} platforms",
@@ -91,11 +104,8 @@ if df is not None and not df.empty:
         # --- Platform Breakdown ---
         create_section_header("Platform Analysis", icon="🏦")
         
-        # Platform distribution using chart grid
-        platform_breakdown = pd.DataFrame([
-            {'Platform': platform, 'Value': value}
-            for platform, value in cash_metrics['latest_platform_breakdown'].items()
-        ])
+        # Platform distribution using new data processing component
+        platform_breakdown = get_asset_breakdown(cash_df, 'platform')
         
         def create_platform_pie_chart():
             st.markdown("**Current Platform Distribution**")
@@ -103,8 +113,7 @@ if df is not None and not df.empty:
                 fig_platform = create_pie_chart(
                     platform_breakdown,
                     names_col='Platform',
-                    values_col='Value',
-                    title="Current Platform Distribution"
+                    values_col='Value'
                 )
                 st.plotly_chart(fig_platform, use_container_width=True)
             else:
@@ -117,7 +126,9 @@ if df is not None and not df.empty:
                     platform_breakdown,
                     x_col='Platform',
                     y_col='Value',
-                    title="Platform Values"
+                    x_label=get_chart_label('asset_name'),
+                    y_label=get_chart_label('value'),
+                    y_format='currency'
                 )
                 st.plotly_chart(fig_platform_bar, use_container_width=True)
             else:
@@ -131,7 +142,7 @@ if df is not None and not df.empty:
         create_section_header("Cash Trends Over Time", icon="📈")
         
         # Create time series charts
-        fig_value, fig_composition = create_asset_type_time_series(df, 'Cash')
+        fig_value, fig_composition = create_asset_type_time_series(df, ASSET_TYPES['CASH'])
         
         def create_cash_values_chart():
             st.markdown("**Cash Values by Platform**")
@@ -143,10 +154,9 @@ if df is not None and not df.empty:
         
         create_chart_grid([create_cash_values_chart, create_platform_composition_chart], cols=2)
         
-        # Monthly cash totals
-        cash_df['Month'] = cash_df['Timestamp'].dt.to_period('M').dt.to_timestamp()
-        monthly_cash = cash_df.groupby('Month')['Value'].sum().reset_index()
-        monthly_cash['RollingAvg'] = monthly_cash['Value'].rolling(window=3).mean()
+        # Monthly cash totals using new data processing components
+        monthly_cash = get_monthly_aggregation(cash_df)
+        monthly_cash = calculate_rolling_metrics(monthly_cash, window=3)
         monthly_cash['MoM'] = monthly_cash['Value'].pct_change()
         
         def create_total_cash_chart():
@@ -154,8 +164,10 @@ if df is not None and not df.empty:
             fig_total = create_time_series_chart(
                 monthly_cash,
                 x_col='Month',
-                y_cols=['Value', 'RollingAvg'],
-                title="Total Cash Over Time"
+                y_cols=['Value', 'Rolling_3M_Avg'],
+                x_label=get_chart_label('month'),
+                y_label=get_chart_label('value'),
+                y_format='currency'
             )
             st.plotly_chart(fig_total, use_container_width=True)
         
@@ -167,9 +179,10 @@ if df is not None and not df.empty:
                     mom_clean,
                     x_col='Month',
                     y_col='MoM',
-                    title="Monthly Cash Changes"
+                    x_label=get_chart_label('month'),
+                    y_label=get_chart_label('percentage_change'),
+                    y_format='percentage'
                 )
-                fig_mom.update_yaxes(tickformat='.2%')
                 fig_mom.update_traces(marker_color=['green' if x >= 0 else 'red' for x in mom_clean['MoM']])
                 st.plotly_chart(fig_mom, use_container_width=True)
             else:
@@ -218,7 +231,9 @@ if df is not None and not df.empty:
             fig_dist = create_histogram(
                 monthly_cash,
                 x_col='Value',
-                title="Cash Balance Distribution",
+                x_label=get_chart_label('value'),
+                y_label=get_chart_label('frequency'),
+                x_format='currency',
                 nbins=10
             )
             st.plotly_chart(fig_dist, use_container_width=True)
@@ -228,7 +243,8 @@ if df is not None and not df.empty:
             fig_box = create_box_plot(
                 monthly_cash,
                 y_col='Value',
-                title="Cash Balance Box Plot"
+                y_label=get_chart_label('value'),
+                y_format='currency'
             )
             st.plotly_chart(fig_box, use_container_width=True)
         
@@ -252,7 +268,9 @@ if df is not None and not df.empty:
                         cash_flow_clean,
                         x_col='Month',
                         y_col='CashFlow',
-                        title="Monthly Cash Flow"
+                        x_label=get_chart_label('month'),
+                        y_label=get_chart_label('value'),
+                        y_format='currency'
                     )
                     fig_flow.update_traces(marker_color=['green' if x >= 0 else 'red' for x in cash_flow_clean['CashFlow']])
                     st.plotly_chart(fig_flow, use_container_width=True)
@@ -266,8 +284,10 @@ if df is not None and not df.empty:
                     fig_flow_dist = create_histogram(
                         cash_flow_clean,
                         x_col='CashFlow',
-                        title="Cash Flow Distribution",
-                        nbins=8
+                        x_label=get_chart_label('value'),
+                        y_label=get_chart_label('frequency'),
+                        nbins=8,
+                        x_format='currency'
                     )
                     st.plotly_chart(fig_flow_dist, use_container_width=True)
                 else:
@@ -338,7 +358,7 @@ if df is not None and not df.empty:
     
     else:
         st.error("❌ No cash data found in your portfolio.")
-        st.info("💡 Make sure your data includes assets classified as 'Cash' type.")
+        st.info(f"💡 Make sure your data includes assets classified as '{ASSET_TYPES['CASH']}' type.")
 
 else:
     st.error("❌ Data could not be loaded. Please check your data file.")

@@ -5,20 +5,26 @@ import pandas as pd
 import os
 from utils import (
     load_data,
-    calculate_asset_type_metrics
+    calculate_asset_type_metrics,
+    get_latest_month_data,
+    get_asset_breakdown,
+    PAGE_TITLE,
+    PAGE_ICON,
+    LAYOUT,
+    INITIAL_SIDEBAR_STATE,
+    CURRENCY_FORMAT,
+    DISPLAY_DATE_FORMAT
 )
 from utils.design.cards import simple_card, complex_emphasis_card, complex_card, emphasis_card
 from utils.design.tokens import CUSTOM_STYLE
 from utils.design.components import create_page_header, create_section_header, create_metric_grid
 
-PAGE_TITLE = "FinTracker - Personal Financial Dashboard"
-
 # Set page config
 st.set_page_config(
-    page_title="FinTracker",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_title=PAGE_TITLE,
+    page_icon=PAGE_ICON,
+    layout=LAYOUT,
+    initial_sidebar_state=INITIAL_SIDEBAR_STATE,
 )
 
 # Apply custom styling
@@ -60,43 +66,48 @@ if raw_data is not None and not raw_data.empty:
         raw_data = classify_asset_types(raw_data)
     
     if 'Asset_Type' in raw_data.columns:
-        # Get the latest month's data
+        # Get the latest month's data using new data processing components
         raw_data['Timestamp'] = pd.to_datetime(raw_data['Timestamp'], dayfirst=True)
-        latest_month = raw_data['Timestamp'].dt.to_period('M').max()
-        latest_data = raw_data[raw_data['Timestamp'].dt.to_period('M') == latest_month]
+        latest_data = get_latest_month_data(raw_data)
         
         if not latest_data.empty:
-            # Calculate asset type breakdown for latest month
-            asset_type_values = latest_data.groupby('Asset_Type')['Value'].sum()
+            # Calculate asset type breakdown for latest month using new data processing component
+            asset_breakdown = get_asset_breakdown(latest_data, 'asset_type')
+            latest_month = latest_data['Timestamp'].dt.to_period('M').max()
             total_value = float(latest_data['Value'].sum())
             
             # Display portfolio summary using metric grid for consistent layout
-            cash_value = float(asset_type_values.get('Cash', 0))
-            cash_pct = (cash_value / total_value) * 100 if total_value > 0 else 0
-            investment_value = float(asset_type_values.get('Investments', 0))
-            investment_pct = (investment_value / total_value) * 100 if total_value > 0 else 0
-            pension_value = float(asset_type_values.get('Pensions', 0))
-            pension_pct = (pension_value / total_value) * 100 if total_value > 0 else 0
+            cash_row = asset_breakdown[asset_breakdown['Asset_Type'] == 'Cash']
+            cash_value = float(cash_row['Value'].iloc[0]) if not cash_row.empty else 0
+            cash_pct = float(cash_row['Percentage'].iloc[0]) if not cash_row.empty else 0
+            
+            investment_row = asset_breakdown[asset_breakdown['Asset_Type'] == 'Investments']
+            investment_value = float(investment_row['Value'].iloc[0]) if not investment_row.empty else 0
+            investment_pct = float(investment_row['Percentage'].iloc[0]) if not investment_row.empty else 0
+            
+            pension_row = asset_breakdown[asset_breakdown['Asset_Type'] == 'Pensions']
+            pension_value = float(pension_row['Value'].iloc[0]) if not pension_row.empty else 0
+            pension_pct = float(pension_row['Percentage'].iloc[0]) if not pension_row.empty else 0
             
             create_metric_grid([
                 lambda: emphasis_card(
                     title="Total Portfolio Value",
-                    metric=f"£{total_value:,.0f}",
-                    caption=f"Latest month: {latest_month.strftime('%B %Y')}"
+                    metric=CURRENCY_FORMAT.format(total_value),
+                    caption=f"Latest month: {latest_month.strftime(DISPLAY_DATE_FORMAT)}"
                 ),
                 lambda: simple_card(
                     title="Cash",
-                    metric=f"£{cash_value:,.0f}",
+                    metric=CURRENCY_FORMAT.format(cash_value),
                     caption=f"{cash_pct:.1f}% of portfolio"
                 ),
                 lambda: simple_card(
                     title="Investments",
-                    metric=f"£{investment_value:,.0f}",
+                    metric=CURRENCY_FORMAT.format(investment_value),
                     caption=f"{investment_pct:.1f}% of portfolio"
                 ),
                 lambda: simple_card(
                     title="Pensions",
-                    metric=f"£{pension_value:,.0f}",
+                    metric=CURRENCY_FORMAT.format(pension_value),
                     caption=f"{pension_pct:.1f}% of portfolio"
                 )
             ], cols=4)

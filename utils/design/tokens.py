@@ -178,6 +178,54 @@ CHART_GRID_WIDTH = 1
 CHART_PLOT_BGCOLOR = 'rgba(0,0,0,0)'
 CHART_PAPER_BGCOLOR = 'rgba(0,0,0,0)'
 
+# Chart Color Palette
+CHART_COLORS = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+]
+
+# Chart Label Configuration
+CHART_LABELS = {
+    # Time-based labels
+    'month': 'Month',
+    'date': 'Date',
+    'year': 'Year',
+    
+    # Financial labels
+    'value': 'Value',
+    'amount': 'Amount',
+    'balance': 'Balance',
+    'total': 'Total',
+    'percentage': 'Percentage',
+    'frequency': 'Frequency',
+    'count': 'Count',
+    
+    # Asset-specific labels
+    'asset_type': 'Asset Type',
+    'asset_name': 'Asset Name',
+    'allocation': 'Allocation',
+    'distribution': 'Distribution',
+    
+    # Performance labels
+    'return': 'Return',
+    'growth': 'Growth',
+    'change': 'Change',
+    'performance': 'Performance',
+    
+    # Risk labels
+    'volatility': 'Volatility',
+    'risk': 'Risk',
+    'sharpe_ratio': 'Sharpe Ratio',
+    
+    # Metric labels
+    'metric': 'Metric',
+    'value_usd': 'Value (USD)',
+    'value_gbp': 'Value (GBP)',
+    'percentage_change': 'Percentage Change',
+    'monthly_change': 'Monthly Change',
+    'annualized_return': 'Annualized Return'
+}
+
 # =============================================================================
 # CARD SPECIFIC TOKENS
 # =============================================================================

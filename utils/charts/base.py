@@ -22,17 +22,28 @@ from utils.design.tokens import (
     get_emphasis_card_title_styles, get_card_metric_styles, get_card_caption_styles,
     get_card_change_styles, get_emphasis_accent_bar,
     # Chart configuration tokens
-    CHART_TEMPLATE, CHART_FONT_FAMILY, CHART_FONT_SIZE, CHART_HEIGHT,
-    CHART_MARGIN, CHART_GRID_COLOR, CHART_AXIS_LINE_COLOR, CHART_AXIS_LINE_WIDTH,
-    CHART_GRID_WIDTH, CHART_PLOT_BGCOLOR, CHART_PAPER_BGCOLOR
+    CHART_TEMPLATE, CHART_FONT_FAMILY, CHART_FONT_SIZE, CHART_HEIGHT, CHART_MARGIN,
+    CHART_GRID_COLOR, CHART_AXIS_LINE_COLOR, CHART_AXIS_LINE_WIDTH, CHART_GRID_WIDTH,
+    CHART_PLOT_BGCOLOR, CHART_PAPER_BGCOLOR
 )
 
 # --- Base Chart Functions ---
 
-def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT, show_legend=True):
+def create_time_series_chart(df, x_col, y_cols, x_label="Month", y_label="Value", 
+                           x_format=None, y_format=None, height=CHART_HEIGHT, show_legend=True):
     """
     Create a standardized time series line chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        x_col: Column to use for x-axis
+        y_cols: List of columns to plot on y-axis
+        x_label: Label for x-axis (default: "Month")
+        y_label: Label for y-axis (default: "Value")
+        x_format: Format type for x-axis ('currency', 'percentage', 'date', 'number')
+        y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
+        height: Chart height
+        show_legend: Whether to show legend
     """
     if df.empty or not y_cols:
         fig = go.Figure()
@@ -43,7 +54,6 @@ def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT,
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -55,7 +65,6 @@ def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT,
         df, 
         x=x_col, 
         y=y_cols,
-        title=title,
         height=height,
         template=CHART_TEMPLATE
     )
@@ -68,6 +77,7 @@ def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT,
         hovermode='x unified'
     )
     fig.update_xaxes(
+        title_text=x_label,
         showgrid=True, 
         gridwidth=CHART_GRID_WIDTH, 
         gridcolor=CHART_GRID_COLOR,
@@ -77,6 +87,7 @@ def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
     fig.update_yaxes(
+        title_text=y_label,
         showgrid=True, 
         gridwidth=CHART_GRID_WIDTH, 
         gridcolor=CHART_GRID_COLOR,
@@ -85,12 +96,31 @@ def create_time_series_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT,
         linecolor=CHART_AXIS_LINE_COLOR,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
+    
+    # Apply formatting if specified
+    if x_format or y_format:
+        from .formatting import apply_consistent_axis_formatting
+        fig = apply_consistent_axis_formatting(fig, x_format=x_format, y_format=y_format, 
+                                             x_label=x_label, y_label=y_label)
+    
     return fig
 
-def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_HEIGHT, orientation='v'):
+def create_bar_chart(df, x_col, y_col, x_label=None, y_label="Value", color_col=None, 
+                    x_format=None, y_format=None, height=CHART_HEIGHT, orientation='v'):
     """
     Create a standardized bar chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        x_col: Column to use for x-axis
+        y_col: Column to use for y-axis
+        x_label: Label for x-axis (default: uses x_col name)
+        y_label: Label for y-axis (default: "Value")
+        color_col: Column to use for color coding
+        x_format: Format type for x-axis ('currency', 'percentage', 'date', 'number')
+        y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
+        height: Chart height
+        orientation: Chart orientation ('v' for vertical, 'h' for horizontal)
     """
     if df.empty:
         fig = go.Figure()
@@ -101,7 +131,6 @@ def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -109,12 +138,16 @@ def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_
             margin=CHART_MARGIN
         )
         return fig
+    
+    # Use x_col name as default x_label if not provided
+    if x_label is None:
+        x_label = x_col
+    
     fig = px.bar(
         df,
         x=x_col,
         y=y_col,
         color=color_col,
-        title=title,
         height=height,
         orientation=orientation,
         template=CHART_TEMPLATE
@@ -128,6 +161,7 @@ def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_
         hovermode='x unified'
     )
     fig.update_xaxes(
+        title_text=x_label,
         showgrid=False,
         zeroline=False,
         showline=True,
@@ -135,6 +169,7 @@ def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_
         linewidth=CHART_AXIS_LINE_WIDTH
     )
     fig.update_yaxes(
+        title_text=y_label,
         showgrid=True,
         gridwidth=CHART_GRID_WIDTH,
         gridcolor=CHART_GRID_COLOR,
@@ -143,12 +178,25 @@ def create_bar_chart(df, x_col, y_col, title=None, color_col=None, height=CHART_
         linecolor=CHART_AXIS_LINE_COLOR,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
+    
+    # Apply formatting if specified
+    if x_format or y_format:
+        from .formatting import apply_consistent_axis_formatting
+        fig = apply_consistent_axis_formatting(fig, x_format=x_format, y_format=y_format, 
+                                             x_label=x_label, y_label=y_label)
+    
     return fig
 
-def create_pie_chart(df, names_col, values_col, title=None, height=CHART_HEIGHT, hole=0.3):
+def create_pie_chart(df, names_col, values_col, height=CHART_HEIGHT, hole=0.3):
     """
     Create a standardized pie chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        names_col: Column to use for pie slice names
+        values_col: Column to use for pie slice values
+        height: Chart height
+        hole: Hole size for donut chart (0.3 = 30% hole)
     """
     if df.empty:
         fig = go.Figure()
@@ -159,7 +207,6 @@ def create_pie_chart(df, names_col, values_col, title=None, height=CHART_HEIGHT,
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -171,7 +218,6 @@ def create_pie_chart(df, names_col, values_col, title=None, height=CHART_HEIGHT,
         df,
         names=names_col,
         values=values_col,
-        title=title,
         hole=hole,
         height=height,
         template=CHART_TEMPLATE
@@ -186,10 +232,19 @@ def create_pie_chart(df, names_col, values_col, title=None, height=CHART_HEIGHT,
     )
     return fig
 
-def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
+def create_histogram(df, x_col, x_label=None, y_label="Frequency", x_format=None, 
+                    height=CHART_HEIGHT, nbins=10):
     """
     Create a standardized histogram chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        x_col: Column to use for x-axis
+        x_label: Label for x-axis (default: uses x_col name)
+        y_label: Label for y-axis (default: "Frequency")
+        x_format: Format type for x-axis ('currency', 'percentage', 'date', 'number')
+        height: Chart height
+        nbins: Number of bins for histogram
     """
     if df.empty:
         fig = go.Figure()
@@ -200,7 +255,6 @@ def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -208,11 +262,15 @@ def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
             margin=CHART_MARGIN
         )
         return fig
+    
+    # Use x_col name as default x_label if not provided
+    if x_label is None:
+        x_label = x_col
+    
     fig = px.histogram(
         df,
         x=x_col,
         nbins=nbins,
-        title=title,
         height=height,
         template=CHART_TEMPLATE
     )
@@ -224,6 +282,7 @@ def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
         showlegend=False
     )
     fig.update_xaxes(
+        title_text=x_label,
         showgrid=False,
         zeroline=False,
         showline=True,
@@ -231,6 +290,7 @@ def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
         linewidth=CHART_AXIS_LINE_WIDTH
     )
     fig.update_yaxes(
+        title_text=y_label,
         showgrid=True,
         gridwidth=CHART_GRID_WIDTH,
         gridcolor=CHART_GRID_COLOR,
@@ -239,12 +299,25 @@ def create_histogram(df, x_col, title=None, height=CHART_HEIGHT, nbins=10):
         linecolor=CHART_AXIS_LINE_COLOR,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
+    
+    # Apply formatting if specified
+    if x_format:
+        from .formatting import apply_consistent_axis_formatting
+        fig = apply_consistent_axis_formatting(fig, x_format=x_format, x_label=x_label, y_label=y_label)
+    
     return fig
 
-def create_box_plot(df, y_col, title=None, height=CHART_HEIGHT, color_col=None):
+def create_box_plot(df, y_col, y_label="Value", y_format=None, height=CHART_HEIGHT, color_col=None):
     """
     Create a standardized box plot chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        y_col: Column to use for y-axis
+        y_label: Label for y-axis (default: "Value")
+        y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
+        height: Chart height
+        color_col: Column to use for color coding
     """
     if df.empty:
         fig = go.Figure()
@@ -255,7 +328,6 @@ def create_box_plot(df, y_col, title=None, height=CHART_HEIGHT, color_col=None):
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -267,7 +339,6 @@ def create_box_plot(df, y_col, title=None, height=CHART_HEIGHT, color_col=None):
         df,
         y=y_col,
         color=color_col,
-        title=title,
         height=height,
         template=CHART_TEMPLATE
     )
@@ -286,6 +357,7 @@ def create_box_plot(df, y_col, title=None, height=CHART_HEIGHT, color_col=None):
         linewidth=CHART_AXIS_LINE_WIDTH
     )
     fig.update_yaxes(
+        title_text=y_label,
         showgrid=True,
         gridwidth=CHART_GRID_WIDTH,
         gridcolor=CHART_GRID_COLOR,
@@ -294,12 +366,28 @@ def create_box_plot(df, y_col, title=None, height=CHART_HEIGHT, color_col=None):
         linecolor=CHART_AXIS_LINE_COLOR,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
+    
+    # Apply formatting if specified
+    if y_format:
+        from .formatting import apply_consistent_axis_formatting
+        fig = apply_consistent_axis_formatting(fig, y_format=y_format, y_label=y_label)
+    
     return fig
 
-def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
+def create_area_chart(df, x_col, y_cols, x_label="Month", y_label="Value", 
+                     x_format=None, y_format=None, height=CHART_HEIGHT):
     """
     Create a standardized area chart.
-    ... (full docstring and implementation from visualizations.py)
+    
+    Args:
+        df: Input DataFrame
+        x_col: Column to use for x-axis
+        y_cols: List of columns to plot on y-axis
+        x_label: Label for x-axis (default: "Month")
+        y_label: Label for y-axis (default: "Value")
+        x_format: Format type for x-axis ('currency', 'percentage', 'date', 'number')
+        y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
+        height: Chart height
     """
     if df.empty or not y_cols:
         fig = go.Figure()
@@ -310,7 +398,6 @@ def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
             font=dict(size=16, color=NEUTRAL_500)
         )
         fig.update_layout(
-            title=title,
             height=height,
             font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
             plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -322,7 +409,6 @@ def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
         df,
         x=x_col,
         y=y_cols,
-        title=title,
         height=height,
         template=CHART_TEMPLATE
     )
@@ -335,6 +421,7 @@ def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
         hovermode='x unified'
     )
     fig.update_xaxes(
+        title_text=x_label,
         showgrid=True, 
         gridwidth=CHART_GRID_WIDTH, 
         gridcolor=CHART_GRID_COLOR,
@@ -344,6 +431,7 @@ def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
         linewidth=CHART_AXIS_LINE_WIDTH
     )
     fig.update_yaxes(
+        title_text=y_label,
         showgrid=True, 
         gridwidth=CHART_GRID_WIDTH, 
         gridcolor=CHART_GRID_COLOR,
@@ -352,4 +440,11 @@ def create_area_chart(df, x_col, y_cols, title=None, height=CHART_HEIGHT):
         linecolor=CHART_AXIS_LINE_COLOR,
         linewidth=CHART_AXIS_LINE_WIDTH
     )
+    
+    # Apply formatting if specified
+    if x_format or y_format:
+        from .formatting import apply_consistent_axis_formatting
+        fig = apply_consistent_axis_formatting(fig, x_format=x_format, y_format=y_format, 
+                                             x_label=x_label, y_label=y_label)
+    
     return fig 
