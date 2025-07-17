@@ -2,10 +2,8 @@
 
 import streamlit as st
 import pandas as pd
-import os
 from utils import (
     load_data,
-    calculate_asset_type_metrics,
     get_latest_month_data,
     get_asset_breakdown,
     PAGE_TITLE,
@@ -15,7 +13,7 @@ from utils import (
     CURRENCY_FORMAT,
     DISPLAY_DATE_FORMAT
 )
-from utils.design.cards import simple_card, complex_emphasis_card, complex_card, emphasis_card
+from utils.design.cards import simple_card, emphasis_card
 from utils.design.tokens import CUSTOM_STYLE
 from utils.design.components import create_page_header, create_section_header, create_metric_grid
 

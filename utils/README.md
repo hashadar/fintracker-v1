@@ -1,4 +1,4 @@
-# Utility Modules v1.1.0
+# Utility Modules v1.2.0
 
 This directory contains general utility modules that support the main financial dashboard application.
 

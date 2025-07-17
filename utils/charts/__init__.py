@@ -1,4 +1,3 @@
-from .wrappers import create_time_series_with_rolling
 from .base import (
     create_time_series_chart,
     create_bar_chart,

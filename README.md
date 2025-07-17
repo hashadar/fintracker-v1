@@ -1,4 +1,4 @@
-# FinTracker v1.1.0
+# FinTracker v1.2.0
 
 A financial dashboard and analytics application built with Streamlit for tracking and analyzing personal financial assets.
 
@@ -19,6 +19,9 @@ FinTracker is a financial dashboard that provides insights into your financial p
 - **Modular Architecture**: Clean, maintainable codebase with reusable components
 - **Design System**: Consistent UI with centralized design tokens and card components
 - **Centralized Configuration & Validation**: All business logic, formatting, and chart styling are managed in config and design tokens, with automatic validation on startup
+- **Componentized Summary Cards & Analytics**: All summary statistics, analytics, and time period breadcrumbs are now reusable components
+- **Legacy Cleanup**: Unused functions and components have been removed for clarity and maintainability
+- **Import & Serialization Fixes**: All import errors and pandas serialization issues have been resolved
 
 ## Architecture
 

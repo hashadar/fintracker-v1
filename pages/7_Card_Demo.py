@@ -7,8 +7,7 @@ from utils import (
     complex_card,
     complex_emphasis_card,
     # Design tokens
-    BRAND_PRIMARY, BRAND_SECONDARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO,
-    get_emphasis_color
+    BRAND_PRIMARY, BRAND_SECONDARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO
 )
 
 st.set_page_config(

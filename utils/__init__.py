@@ -12,24 +12,15 @@ from .config import (
 from .data_processing import (
     filter_by_asset_type,
     get_latest_month_data,
-    get_time_period_data,
-    calculate_percentage_changes,
     get_monthly_aggregation,
     calculate_rolling_metrics,
-    prepare_chart_data,
     get_asset_breakdown,
     calculate_asset_type_metrics,
     calculate_allocation_metrics,
-    calculate_drawdown,
-    get_performance_metrics,
+    create_allocation_time_series,
+    get_asset_type_time_periods,
     create_platform_trends_data,
-    calculate_monthly_metrics,
-    calculate_ytd_metrics,
-    calculate_qtd_metrics,
-    sortino_ratio,
-    calculate_var,
-    calculate_cvar,
-    calculate_max_drawdown
+    create_platform_allocation_time_series
 )
 from .charts import create_asset_type_time_series, create_asset_type_breakdown
 from .design import simple_card, emphasis_card, complex_card, complex_emphasis_card, create_metric_grid, create_chart_grid, create_section_header, create_page_header
@@ -84,24 +75,15 @@ __all__ = [
     # Data processing functions
     'filter_by_asset_type',
     'get_latest_month_data',
-    'get_time_period_data',
-    'calculate_percentage_changes',
     'get_monthly_aggregation',
     'calculate_rolling_metrics',
-    'prepare_chart_data',
     'get_asset_breakdown',
     'calculate_asset_type_metrics',
     'calculate_allocation_metrics',
-    'calculate_drawdown',
-    'get_performance_metrics',
+    'create_allocation_time_series',
+    'get_asset_type_time_periods',
     'create_platform_trends_data',
-    'calculate_monthly_metrics',
-    'calculate_ytd_metrics',
-    'calculate_qtd_metrics',
-    'sortino_ratio',
-    'calculate_var',
-    'calculate_cvar',
-    'calculate_max_drawdown',
+    'create_platform_allocation_time_series',
 
     # Chart functions
     'create_asset_type_time_series',
