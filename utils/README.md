@@ -18,7 +18,6 @@ This directory contains general utility modules that support the main financial 
 
 ### `charts/`
 - `base.py`: Base chart functions (time series, bar, pie, area, etc.), now with enhanced support for grouped bar charts
-- `wrappers.py`: Chart wrapper functions for common patterns
 - `formatting.py`: Axis and data formatting helpers
 - `asset_types.py`: Asset-specific chart functions
 

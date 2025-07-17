@@ -38,7 +38,6 @@ utils/
 │   └── tokens.py    # Design tokens (colors, spacing, fonts)
 ├── charts/          # Chart creation and formatting
 │   ├── base.py      # Base chart functions
-│   ├── wrappers.py  # Chart wrapper functions
 │   ├── formatting.py # Axis and data formatting
 │   └── asset_types.py # Asset-specific charts
 ├── etl/             # Data loading and asset classification
