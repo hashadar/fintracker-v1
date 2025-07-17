@@ -1,6 +1,7 @@
 import streamlit as st
 from utils import (
     load_data,
+    load_pension_cashflows,
     calculate_asset_type_metrics,
     filter_by_asset_type,
     get_asset_type_time_periods,
@@ -13,7 +14,8 @@ from utils.design.components import (
     create_page_header,
     create_section_header,
     create_asset_summary_cards,
-    create_time_period_breadcrumb
+    create_time_period_breadcrumb,
+    create_pension_asset_analysis
 )
 
 # Page configuration
@@ -21,6 +23,7 @@ st.set_page_config(page_title="Pensions - FinTracker", layout="wide")
 
 # Load data
 df = load_data()
+cashflows_df = load_pension_cashflows()
 
 if df is not None and not df.empty:
     # Filter for pension assets using new data processing component
@@ -63,9 +66,14 @@ if df is not None and not df.empty:
         from utils.design.components import create_portfolio_analytics_charts
         create_portfolio_analytics_charts(pension_df, asset_type=ASSET_TYPES['PENSIONS'])
         
-        # --- Asset-Level Analysis ---
-        from utils.design.components import create_investment_asset_analysis
-        create_investment_asset_analysis(pension_df, asset_type=ASSET_TYPES['PENSIONS'])
+        # --- Asset-Level Analysis (with Cashflow Data) ---
+        create_pension_asset_analysis(pension_df, cashflows_df, asset_type=ASSET_TYPES['PENSIONS'])
+
+        st.markdown("---")
+
+        # --- Pension Growth Forecast ---
+        from utils.design.components import create_pension_forecast_section
+        create_pension_forecast_section(pension_df, cashflows_df)
     
     else:
         st.error("❌ No pension data found in your portfolio.")

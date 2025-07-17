@@ -253,6 +253,128 @@ def calculate_asset_type_metrics(df: pd.DataFrame, asset_type: str) -> Dict[str,
     return metrics
 
 
+def calculate_actual_pension_returns(asset_df: pd.DataFrame, cashflows_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate actual percentage returns for pension assets by removing cashflow impact.
+    Uses the formula: Return = (End Value - Start Value - Net Cashflow) / Start Value
+    """
+    if asset_df is None or asset_df.empty:
+        return pd.DataFrame()
+
+    # --- 1. Prepare Asset Data ---
+    asset_copy = asset_df.copy()
+    asset_copy['Month'] = asset_copy['Timestamp'].dt.to_period('M').dt.to_timestamp()
+    asset_monthly = asset_copy.groupby(['Month', 'Asset'])['Value'].last().reset_index()
+
+    # --- 2. Prepare Cashflow Data ---
+    if cashflows_df is not None and not cashflows_df.empty:
+        cashflow_copy = cashflows_df.copy()
+        cashflow_copy['Month'] = cashflow_copy['Timestamp'].dt.to_period('M').dt.to_timestamp()
+        cashflow_monthly = cashflow_copy.groupby(['Month', 'Asset'])['Value'].sum().reset_index()
+        cashflow_monthly = cashflow_monthly.rename(columns={'Value': 'Net_Cashflow'})
+    else:
+        cashflow_monthly = pd.DataFrame(columns=['Month', 'Asset', 'Net_Cashflow'])
+
+    # --- 3. Combine Data and Calculate Returns ---
+    all_returns = []
+    for asset in asset_monthly['Asset'].unique():
+        # Isolate data for one asset
+        single_asset_values = asset_monthly[asset_monthly['Asset'] == asset].sort_values('Month')
+        single_asset_cashflows = cashflow_monthly[cashflow_monthly['Asset'] == asset]
+
+        # Merge asset values with their corresponding cashflows
+        merged_df = pd.merge(single_asset_values, single_asset_cashflows, on=['Month', 'Asset'], how='left')
+        merged_df['Net_Cashflow'] = merged_df['Net_Cashflow'].fillna(0)
+
+        # Get Start Value (which is the End Value of the previous month)
+        merged_df['Start_Value'] = merged_df['Value'].shift(1)
+
+        # Drop the first row for each asset as it has no previous month to compare against
+        merged_df = merged_df.dropna(subset=['Start_Value'])
+
+        if merged_df.empty:
+            continue
+            
+        # Rename columns for clarity before calculation
+        merged_df = merged_df.rename(columns={'Value': 'End_Value'})
+
+        # Calculate actual return using the correct formula
+        def calculate_return(row):
+            if row['Start_Value'] > 0:
+                # (End - Start - Cashflow) / Start
+                return (row['End_Value'] - row['Start_Value'] - row['Net_Cashflow']) / row['Start_Value']
+            return 0.0
+
+        merged_df['Actual_Return'] = merged_df.apply(calculate_return, axis=1)
+        all_returns.append(merged_df)
+
+    if not all_returns:
+        return pd.DataFrame()
+
+    final_returns_df = pd.concat(all_returns, ignore_index=True)
+    
+    # Ensure all required columns are present for downstream components
+    final_returns_df['Value_Before_Cashflow'] = final_returns_df['End_Value'] - final_returns_df['Net_Cashflow']
+    final_returns_df['Current_Value'] = final_returns_df['End_Value']
+    final_returns_df['Current_Cashflow'] = final_returns_df['Net_Cashflow']
+
+    return final_returns_df
+
+
+def get_cumulative_pension_cashflows(cashflows_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Get cumulative cashflows by asset over time.
+    
+    Args:
+        cashflows_df: DataFrame with pension cashflow data
+    
+    Returns:
+        DataFrame with columns: Month, Asset, Cumulative_Cashflow
+    """
+    if cashflows_df is None or cashflows_df.empty:
+        return pd.DataFrame()
+    
+    df = cashflows_df.copy()
+    df['Month'] = df['Timestamp'].dt.to_period('M')
+    monthly_cashflows = df.groupby(['Month', 'Asset'])['Value'].sum().reset_index()
+    monthly_cashflows['Month'] = monthly_cashflows['Month'].dt.to_timestamp()
+    
+    # Calculate cumulative cashflows
+    cumulative_data = []
+    for asset in monthly_cashflows['Asset'].unique():
+        asset_data = monthly_cashflows[monthly_cashflows['Asset'] == asset].sort_values('Month')
+        asset_data['Cumulative_Cashflow'] = asset_data['Value'].cumsum()
+        cumulative_data.append(asset_data[['Month', 'Asset', 'Cumulative_Cashflow']])
+    
+    if cumulative_data:
+        return pd.concat(cumulative_data, ignore_index=True)
+    else:
+        return pd.DataFrame()
+
+
+def calculate_actual_mom_changes(asset_df: pd.DataFrame, cashflows_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate actual month-over-month percentage changes by removing cashflow impact.
+    
+    Args:
+        asset_df: DataFrame with pension asset data
+        cashflows_df: DataFrame with pension cashflow data
+    
+    Returns:
+        DataFrame with columns: Month, Asset, Actual_MoM_Change
+    """
+    actual_returns = calculate_actual_pension_returns(asset_df, cashflows_df)
+    
+    if actual_returns.empty:
+        return pd.DataFrame()
+    
+    # The actual returns are already the MoM changes
+    mom_data = actual_returns[['Month', 'Asset', 'Actual_Return']].copy()
+    mom_data = mom_data.rename(columns={'Actual_Return': 'Actual_MoM_Change'})
+    
+    return mom_data
+
+
 def calculate_allocation_metrics(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Union[float, None]]], pd.Timestamp, Optional[pd.Timestamp], Optional[pd.Timestamp]]:
     """
     Calculate comprehensive allocation metrics for all asset types.
@@ -485,3 +607,87 @@ def create_platform_allocation_time_series(df: pd.DataFrame, asset_type: str) ->
     if not allocation_df.empty:
         allocation_df = allocation_df.sort_values('Month')
     return allocation_df 
+
+
+def forecast_pension_growth(
+    historical_df: pd.DataFrame,
+    forecast_years: int,
+    monthly_contribution: float,
+    annual_return_rate: float,
+    annual_volatility: float = 0.15,
+    confidence_level: float = 0.90
+) -> pd.DataFrame:
+    """
+    Forecasts pension growth using a simple Monte Carlo simulation.
+
+    Args:
+        historical_df (pd.DataFrame): DataFrame with historical monthly values. Must contain 'Month' and 'Value' columns.
+        forecast_years (int): The number of years to forecast.
+        monthly_contribution (float): The planned future monthly contribution.
+        annual_return_rate (float): The expected average annual return (as a decimal, e.g., 0.07 for 7%).
+        annual_volatility (float): The expected annual volatility (standard deviation).
+        confidence_level (float): The confidence level for the upper and lower bounds (e.g., 0.90 for 90%).
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the full projection with columns 
+                      ['Month', 'Type', 'Projected_Value', 'Lower_Bound', 'Upper_Bound'].
+    """
+    if historical_df.empty:
+        return pd.DataFrame()
+
+    # --- 1. Prepare Parameters ---
+    last_historical_month = historical_df['Month'].max()
+    last_historical_value = historical_df[historical_df['Month'] == last_historical_month]['Value'].iloc[0]
+    
+    monthly_return_rate = (1 + annual_return_rate)**(1/12) - 1
+    monthly_volatility = annual_volatility / np.sqrt(12)
+    
+    num_months = forecast_years * 12
+    num_simulations = 500  # Number of Monte Carlo simulations to run
+    
+    # --- 2. Run Monte Carlo Simulation ---
+    all_simulations = np.zeros((num_months + 1, num_simulations))
+    all_simulations[0, :] = last_historical_value
+
+    for t in range(1, num_months + 1):
+        # Generate random returns for this month across all simulations
+        random_returns = np.random.normal(monthly_return_rate, monthly_volatility, num_simulations)
+        # Calculate the new value for each simulation
+        all_simulations[t, :] = all_simulations[t-1, :] * (1 + random_returns) + monthly_contribution
+
+    # --- 3. Aggregate Results ---
+    projection_df = pd.DataFrame(all_simulations)
+    
+    # Calculate median, lower, and upper bounds
+    lower_percentile = (1 - confidence_level) / 2
+    upper_percentile = 1 - lower_percentile
+    
+    median_projection = projection_df.quantile(q=0.5, axis=1)
+    lower_bound = projection_df.quantile(q=lower_percentile, axis=1)
+    upper_bound = projection_df.quantile(q=upper_percentile, axis=1)
+
+    # --- 4. Format Output DataFrame ---
+    forecast_dates = pd.to_datetime([last_historical_month + pd.DateOffset(months=i) for i in range(num_months + 1)])
+    
+    forecast_results = pd.DataFrame({
+        'Month': forecast_dates,
+        'Projected_Value': median_projection,
+        'Lower_Bound': lower_bound,
+        'Upper_Bound': upper_bound
+    })
+
+    # Combine with historical data for a continuous chart
+    historical_formatted = historical_df[['Month', 'Value']].copy()
+    historical_formatted.rename(columns={'Value': 'Projected_Value'}, inplace=True)
+    historical_formatted['Type'] = 'Historical'
+    
+    forecast_results['Type'] = 'Forecast'
+    
+    # Ensure the first forecast point aligns with the last historical point
+    forecast_results.loc[0, 'Projected_Value'] = last_historical_value
+    forecast_results.loc[0, 'Lower_Bound'] = last_historical_value
+    forecast_results.loc[0, 'Upper_Bound'] = last_historical_value
+
+    final_df = pd.concat([historical_formatted.iloc[:-1], forecast_results], ignore_index=True)
+
+    return final_df 

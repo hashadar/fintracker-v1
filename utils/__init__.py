@@ -1,13 +1,14 @@
 """Utility modules for the financial dashboard app."""
 
-from .etl.data_loader import load_data, filter_data_by_date_range, get_month_range
+from .etl.data_loader import load_data, load_pension_cashflows, filter_data_by_date_range, get_month_range
 from .etl.asset_classifier import classify_asset_types, get_asset_classification_rules
 from .config import (
     ASSET_TYPES, ASSET_SUBTYPES, DATE_FORMAT, DISPLAY_DATE_FORMAT, SHORT_DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT,
     RISK_FREE_RATE, DEFAULT_FORECAST_PERIODS, DEFAULT_ROLLING_WINDOW, PAGE_TITLE, PAGE_ICON, 
     LAYOUT, INITIAL_SIDEBAR_STATE, MIN_DATA_POINTS_FOR_FORECAST, SEASONAL_PERIODS, CONFIDENCE_LEVEL, 
     SHEET_NAME, DATE_COLUMN, AMOUNT_COLUMN, CATEGORY_COLUMN, DESCRIPTION_COLUMN, VOLATILITY_WINDOW, 
-    VAR_CONFIDENCE_LEVEL, MAX_DRAWDOWN_WINDOW, BENCHMARK_RETURN, INFLATION_RATE, validate_config
+    VAR_CONFIDENCE_LEVEL, MAX_DRAWDOWN_WINDOW, BENCHMARK_RETURN, INFLATION_RATE, validate_config,
+    PENSION_CASHFLOW_SHEET, CASHFLOW_TYPE_COLUMN, NOTES_COLUMN, CASHFLOW_TYPES, CASHFLOW_DESCRIPTIONS
 )
 from .data_processing import (
     filter_by_asset_type,
@@ -20,10 +21,14 @@ from .data_processing import (
     create_allocation_time_series,
     get_asset_type_time_periods,
     create_platform_trends_data,
-    create_platform_allocation_time_series
+    create_platform_allocation_time_series,
+    calculate_actual_pension_returns,
+    get_cumulative_pension_cashflows,
+    calculate_actual_mom_changes,
+    forecast_pension_growth
 )
 from .charts import create_asset_type_time_series, create_asset_type_breakdown
-from .design import simple_card, emphasis_card, complex_card, complex_emphasis_card, create_metric_grid, create_chart_grid, create_section_header, create_page_header
+from .design import simple_card, emphasis_card, complex_card, complex_emphasis_card, create_metric_grid, create_chart_grid, create_section_header, create_page_header, create_pension_asset_analysis, create_pension_forecast_section
 from .design.tokens import (
     # Color tokens
     BRAND_PRIMARY, BRAND_SECONDARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO,
@@ -64,9 +69,11 @@ __all__ = [
     'LAYOUT', 'INITIAL_SIDEBAR_STATE', 'MIN_DATA_POINTS_FOR_FORECAST', 'SEASONAL_PERIODS', 'CONFIDENCE_LEVEL', 
     'SHEET_NAME', 'DATE_COLUMN', 'AMOUNT_COLUMN', 'CATEGORY_COLUMN', 'DESCRIPTION_COLUMN', 'VOLATILITY_WINDOW', 
     'VAR_CONFIDENCE_LEVEL', 'MAX_DRAWDOWN_WINDOW', 'BENCHMARK_RETURN', 'INFLATION_RATE', 'validate_config',
+    'PENSION_CASHFLOW_SHEET', 'CASHFLOW_TYPE_COLUMN', 'NOTES_COLUMN', 'CASHFLOW_TYPES', 'CASHFLOW_DESCRIPTIONS',
     
     # ETL functions (core data loading and transformation)
     'load_data',
+    'load_pension_cashflows',
     'filter_data_by_date_range',
     'get_month_range',
     'classify_asset_types',
@@ -84,6 +91,11 @@ __all__ = [
     'get_asset_type_time_periods',
     'create_platform_trends_data',
     'create_platform_allocation_time_series',
+    # Pension cashflow analytics
+    'calculate_actual_pension_returns',
+    'get_cumulative_pension_cashflows',
+    'calculate_actual_mom_changes',
+    'forecast_pension_growth',
 
     # Chart functions
     'create_asset_type_time_series',
@@ -98,6 +110,8 @@ __all__ = [
     'create_chart_grid',
     'create_section_header',
     'create_page_header',
+    'create_pension_asset_analysis',
+    'create_pension_forecast_section',
 
     # Design tokens
     'BRAND_PRIMARY', 'BRAND_SECONDARY', 'BRAND_SUCCESS', 'BRAND_WARNING', 'BRAND_ERROR', 'BRAND_INFO',

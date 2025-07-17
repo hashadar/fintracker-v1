@@ -1,19 +1,22 @@
-# FinTracker v1.2.0
+# FinTracker v2.0.0
 
-A financial dashboard and analytics application built with Streamlit for tracking and analyzing personal financial assets.
+A financial dashboard and analytics application built with Streamlit for tracking and analyzing personal financial assets, now with cashflow tracking and forecasting capabilities.
 
 ## Overview
 
 FinTracker is a financial dashboard that provides insights into your financial portfolio. The application connects to Google Sheets to load your financial data and automatically categorizes assets into Cash, Investments, and Pensions.
 
-**All configuration, chart styling, and validation are now fully centralized and standardized for maintainability and safety.**
+**This version introduces our first integration with cashflow data, allowing for more accurate performance metrics and powerful forecasting features.**
 
 ## Current Features
 
 - **Multi-Asset Tracking**: Monitor cash, investments, and pensions with dedicated dashboard pages
-- **Google Sheets Integration**: Direct connection to Google Sheets for data management
+- **Google Sheets Integration**: Direct connection to Google Sheets for both asset values and cashflow data
+- **Pension Cashflow Tracking**: Track contributions, fees, and transfers for pension accounts
+- **Actual Returns Calculation**: Pension performance metrics now account for cash inflows and outflows, providing a true investment return
+- **Interactive Pension Forecasting**: Forecast future pension growth with a simple Monte Carlo simulation, adjustable for contributions and market returns
 - **Automatic Asset Classification**: Assets are categorized based on their names and platforms
-- **Interactive Dashboards**: Charts, tables, and metrics for each asset type
+- **Interactive Dashboards**: Charts, tables, and metrics for each asset type, now including grouped bar charts for easier comparison
 - **Monthly Data Processing**: Handles monthly snapshots with automatic deduplication
 - **Performance Metrics**: Returns, volatility, drawdown, and other financial metrics
 - **Modular Architecture**: Clean, maintainable codebase with reusable components
@@ -53,6 +56,14 @@ The application expects Google Sheets data with these columns:
 - `Asset`: Specific asset name
 - `Value`: Monetary value in pounds sterling
 - `Token Amount`: Optional field for crypto assets
+
+The application also supports a `Pension Cashflows` sheet with the following columns:
+- `Timestamp`: Date of the cashflow event
+- `Platform`: Pension provider name
+- `Asset`: Specific pension product/scheme
+- `Value`: Monetary value of the cashflow
+- `Cashflow Type`: The type of cashflow (e.g., 'Contribution', 'Fee', 'Transfer')
+- `Description`: A description of the cashflow (e.g., 'Employer contribution')
 
 ## Installation
 
@@ -94,6 +105,7 @@ The codebase is fully standardized:
 - **Layout Components**: Consistent page layouts across all dashboard pages
 - **Configuration & Validation**: All business logic, formatting, and chart styling are managed in config and design tokens, with automatic validation
 - **Code Organization**: Clean separation of concerns with dedicated modules
+- **Commit Messages**: Follow conventional commit standards for a clear and organized history (e.g., `feat:`, `fix:`, `docs:`).
 
 ## License
 

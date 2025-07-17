@@ -55,6 +55,25 @@ AMOUNT_COLUMN = 'Amount'
 CATEGORY_COLUMN = 'Category'
 DESCRIPTION_COLUMN = 'Description'
 
+# Pension Cashflow Configuration
+PENSION_CASHFLOW_SHEET = 'Pension Cashflows'
+CASHFLOW_TYPE_COLUMN = 'Cashflow Type'
+NOTES_COLUMN = 'Notes'
+
+# Cashflow Types
+CASHFLOW_TYPES = {
+    'CONTRIBUTION': 'Contribution',
+    'FEE': 'Fee',
+    'TRANSFER': 'Transfer'
+}
+
+# Cashflow Descriptions
+CASHFLOW_DESCRIPTIONS = {
+    'EMPLOYER_CONTRIBUTION': 'Employer contribution',
+    'PERSONAL_CONTRIBUTION': 'Personal contribution',
+    'TAX_RELIEF': 'Tax relief'
+}
+
 # Risk Metrics Configuration
 VOLATILITY_WINDOW = 12  # months for volatility calculation
 VAR_CONFIDENCE_LEVEL = 0.95
@@ -161,7 +180,10 @@ def validate_config():
         'DATE_COLUMN': DATE_COLUMN,
         'AMOUNT_COLUMN': AMOUNT_COLUMN,
         'CATEGORY_COLUMN': CATEGORY_COLUMN,
-        'DESCRIPTION_COLUMN': DESCRIPTION_COLUMN
+        'DESCRIPTION_COLUMN': DESCRIPTION_COLUMN,
+        'PENSION_CASHFLOW_SHEET': PENSION_CASHFLOW_SHEET,
+        'CASHFLOW_TYPE_COLUMN': CASHFLOW_TYPE_COLUMN,
+        'NOTES_COLUMN': NOTES_COLUMN
     }
     
     for name, value in string_constants.items():

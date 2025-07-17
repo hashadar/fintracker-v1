@@ -30,7 +30,8 @@ from utils.design.tokens import (
 # --- Base Chart Functions ---
 
 def create_time_series_chart(df, x_col, y_cols, x_label="Month", y_label="Value", 
-                           x_format=None, y_format=None, height=CHART_HEIGHT, show_legend=True):
+                           x_format=None, y_format=None, height=CHART_HEIGHT, show_legend=True,
+                           confidence_band=None):
     """
     Create a standardized time series line chart.
     
@@ -44,6 +45,7 @@ def create_time_series_chart(df, x_col, y_cols, x_label="Month", y_label="Value"
         y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
         height: Chart height
         show_legend: Whether to show legend
+        confidence_band (dict): A dictionary with 'lower' and 'upper' keys for confidence bands.
     """
     if df.empty or not y_cols:
         fig = go.Figure()
@@ -68,6 +70,27 @@ def create_time_series_chart(df, x_col, y_cols, x_label="Month", y_label="Value"
         height=height,
         template=CHART_TEMPLATE
     )
+
+    # Add confidence band if provided
+    if confidence_band and confidence_band['lower'] in df.columns and confidence_band['upper'] in df.columns:
+        fig.add_trace(go.Scatter(
+            x=df[x_col],
+            y=df[confidence_band['upper']],
+            fill=None,
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)'),
+            showlegend=False
+        ))
+        fig.add_trace(go.Scatter(
+            x=df[x_col],
+            y=df[confidence_band['lower']],
+            fill='tonexty',
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)'),
+            fillcolor='rgba(0,100,80,0.2)',
+            showlegend=False
+        ))
+
     fig.update_layout(
         font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
         plot_bgcolor=CHART_PLOT_BGCOLOR,
@@ -105,7 +128,7 @@ def create_time_series_chart(df, x_col, y_cols, x_label="Month", y_label="Value"
     
     return fig
 
-def create_bar_chart(df, x_col, y_col, x_label=None, y_label="Value", color_col=None, 
+def create_bar_chart(df, x_col, y_cols, x_label=None, y_label="Value", color_col=None, 
                     x_format=None, y_format=None, height=CHART_HEIGHT, orientation='v'):
     """
     Create a standardized bar chart.
@@ -113,7 +136,7 @@ def create_bar_chart(df, x_col, y_col, x_label=None, y_label="Value", color_col=
     Args:
         df: Input DataFrame
         x_col: Column to use for x-axis
-        y_col: Column to use for y-axis
+        y_cols: Column (str) or list of columns (list) to use for y-axis. A list creates grouped bars.
         x_label: Label for x-axis (default: uses x_col name)
         y_label: Label for y-axis (default: "Value")
         color_col: Column to use for color coding
@@ -146,19 +169,23 @@ def create_bar_chart(df, x_col, y_col, x_label=None, y_label="Value", color_col=
     fig = px.bar(
         df,
         x=x_col,
-        y=y_col,
+        y=y_cols,
         color=color_col,
         height=height,
         orientation=orientation,
         template=CHART_TEMPLATE
     )
+
+    is_grouped = isinstance(y_cols, list) and len(y_cols) > 1
+
     fig.update_layout(
         font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
         plot_bgcolor=CHART_PLOT_BGCOLOR,
         paper_bgcolor=CHART_PAPER_BGCOLOR,
         margin=CHART_MARGIN,
-        showlegend=color_col is not None,
-        hovermode='x unified'
+        showlegend=(color_col is not None) or is_grouped,
+        hovermode='x unified',
+        barmode='group' if is_grouped else 'relative'
     )
     fig.update_xaxes(
         title_text=x_label,
@@ -307,13 +334,13 @@ def create_histogram(df, x_col, x_label=None, y_label="Frequency", x_format=None
     
     return fig
 
-def create_box_plot(df, y_col, y_label="Value", y_format=None, height=CHART_HEIGHT, color_col=None):
+def create_box_plot(df, y_cols, y_label="Value", y_format=None, height=CHART_HEIGHT, color_col=None):
     """
     Create a standardized box plot chart.
     
     Args:
         df: Input DataFrame
-        y_col: Column to use for y-axis
+        y_cols: Column to use for y-axis
         y_label: Label for y-axis (default: "Value")
         y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
         height: Chart height
@@ -337,7 +364,7 @@ def create_box_plot(df, y_col, y_label="Value", y_format=None, height=CHART_HEIG
         return fig
     fig = px.box(
         df,
-        y=y_col,
+        y=y_cols,
         color=color_col,
         height=height,
         template=CHART_TEMPLATE
@@ -375,7 +402,7 @@ def create_box_plot(df, y_col, y_label="Value", y_format=None, height=CHART_HEIG
     return fig
 
 def create_area_chart(df, x_col, y_cols, x_label="Month", y_label="Value", 
-                     x_format=None, y_format=None, height=CHART_HEIGHT):
+                     x_format=None, y_format=None, height=CHART_HEIGHT, stacked=False):
     """
     Create a standardized area chart.
     
@@ -388,6 +415,7 @@ def create_area_chart(df, x_col, y_cols, x_label="Month", y_label="Value",
         x_format: Format type for x-axis ('currency', 'percentage', 'date', 'number')
         y_format: Format type for y-axis ('currency', 'percentage', 'date', 'number')
         height: Chart height
+        stacked: Whether to create a stacked area chart (default: False)
     """
     if df.empty or not y_cols:
         fig = go.Figure()
@@ -405,13 +433,70 @@ def create_area_chart(df, x_col, y_cols, x_label="Month", y_label="Value",
             margin=CHART_MARGIN
         )
         return fig
-    fig = px.area(
-        df,
-        x=x_col,
-        y=y_cols,
-        height=height,
-        template=CHART_TEMPLATE
-    )
+    if stacked:
+        # For stacked area chart, use go.Figure with stackgroup
+        fig = go.Figure()
+        
+        # Sort the dataframe by x_col to ensure proper stacking
+        df_sorted = df.sort_values(x_col)
+        
+        for col in y_cols:
+            fig.add_trace(go.Scatter(
+                x=df_sorted[x_col],
+                y=df_sorted[col],
+                name=col,
+                fill='tonexty',
+                stackgroup='one',
+                mode='lines'
+            ))
+        
+        fig.update_layout(
+            height=height,
+            template=CHART_TEMPLATE,
+            font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
+            plot_bgcolor=CHART_PLOT_BGCOLOR,
+            paper_bgcolor=CHART_PAPER_BGCOLOR,
+            margin=CHART_MARGIN,
+            showlegend=True,
+            hovermode='x unified'
+        )
+        
+        fig.update_xaxes(
+            title_text=x_label,
+            showgrid=True, 
+            gridwidth=CHART_GRID_WIDTH, 
+            gridcolor=CHART_GRID_COLOR,
+            zeroline=False,
+            showline=True,
+            linecolor=CHART_AXIS_LINE_COLOR,
+            linewidth=CHART_AXIS_LINE_WIDTH
+        )
+        fig.update_yaxes(
+            title_text=y_label,
+            showgrid=True, 
+            gridwidth=CHART_GRID_WIDTH, 
+            gridcolor=CHART_GRID_COLOR,
+            zeroline=False,
+            showline=True,
+            linecolor=CHART_AXIS_LINE_COLOR,
+            linewidth=CHART_AXIS_LINE_WIDTH
+        )
+        
+        # Apply formatting if specified
+        if x_format or y_format:
+            from .formatting import apply_consistent_axis_formatting
+            fig = apply_consistent_axis_formatting(fig, x_format=x_format, y_format=y_format, 
+                                                 x_label=x_label, y_label=y_label)
+        
+        return fig
+    else:
+        fig = px.area(
+            df,
+            x=x_col,
+            y=y_cols,
+            height=height,
+            template=CHART_TEMPLATE
+        )
     fig.update_layout(
         font=dict(family=CHART_FONT_FAMILY, size=CHART_FONT_SIZE),
         plot_bgcolor=CHART_PLOT_BGCOLOR,

@@ -1,20 +1,23 @@
-# Utility Modules v1.2.0
+# Utility Modules v2.0.0
 
 This directory contains general utility modules that support the main financial dashboard application.
 
-**All configuration, chart styling, and validation are now fully centralized and standardized.**
+**This version introduces new utilities for handling cashflow data and performing financial forecasting.**
 
 ## Modules
 
 ### `etl/`
-- `data_loader.py`: Loads and preprocesses financial data from Google Sheets
+- `data_loader.py`: Loads and preprocesses financial data from Google Sheets, now including pension cashflows
 - `asset_classifier.py`: Classifies assets by type and platform
 
 ### `data_processing.py`
-- Data processing utilities for filtering, aggregation, rolling metrics, drawdown, and performance calculations
+- Data processing utilities for filtering, aggregation, and rolling metrics
+- **New**: `calculate_actual_pension_returns`: Calculates true pension returns by accounting for cashflows
+- **New**: `get_cumulative_pension_cashflows`: Aggregates cashflows over time for charting
+- **New**: `forecast_pension_growth`: A simple Monte Carlo simulation engine for forecasting future pension values
 
 ### `charts/`
-- `base.py`: Base chart functions (time series, bar, pie, area, etc.)
+- `base.py`: Base chart functions (time series, bar, pie, area, etc.), now with enhanced support for grouped bar charts
 - `wrappers.py`: Chart wrapper functions for common patterns
 - `formatting.py`: Axis and data formatting helpers
 - `asset_types.py`: Asset-specific chart functions
@@ -93,6 +96,17 @@ These modules are imported and used by the main application (`Home.py`) and the 
 5. `charts/` is then used to generate charts and card components based on these metrics.
 6. `design/tokens.py` provides consistent styling throughout this process.
 7. `config.py` provides underlying definitions (like asset types) and validation used throughout the application.
+
+## Data Flow Example (Pension Analysis)
+
+1. `data_loader.load_data()` loads the main financial data.
+2. `data_loader.load_pension_cashflows()` loads the pension cashflow data.
+3. Both datasets are passed to the `pages/pensions.py` module.
+4. `data_processing.calculate_actual_pension_returns()` is used to calculate true returns.
+5. `data_processing.forecast_pension_growth()` is used to run the interactive forecast.
+6. `charts/` is then used to generate charts (like grouped bar charts for MoM changes) and card components.
+7. `design/tokens.py` provides consistent styling throughout this process.
+8. `config.py` provides underlying definitions (like cashflow types) and validation.
 
 ## Best Practices
 

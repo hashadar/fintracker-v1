@@ -1,6 +1,10 @@
 import streamlit as st
-from .tokens import BRAND_SUCCESS, BRAND_ERROR
+import pandas as pd
+import plotly.graph_objects as go
+from typing import List, Dict, Union, Optional
+from .tokens import BRAND_SUCCESS, BRAND_ERROR, BRAND_PRIMARY, BRAND_INFO
 from .cards import emphasis_card, complex_emphasis_card, simple_card
+from ..config import CASHFLOW_TYPES
 
 
 def create_metric_grid(metrics_list, cols=4):
@@ -309,7 +313,7 @@ def create_portfolio_analytics_charts(df, asset_type=None, section_title="Portfo
             fig_mom = create_bar_chart(
                 mom_clean,
                 x_col='Month',
-                y_col='MoM',
+                y_cols='MoM',
                 x_label=get_chart_label('month'),
                 y_label=get_chart_label('percentage_change'),
                 y_format='percentage'
@@ -450,13 +454,10 @@ def create_investment_asset_analysis(df, asset_type=None):
     def create_mom_changes_chart():
         st.markdown("**Month-over-Month Changes by Asset**")
         
-        # Calculate MoM changes for each asset
         mom_data = []
         for asset in monthly_by_asset['Asset'].unique():
             asset_data = monthly_by_asset[monthly_by_asset['Asset'] == asset].sort_values('Month')
             asset_data['MoM'] = asset_data['Value'].pct_change()
-            
-            # Add asset name to each row
             asset_data['Asset'] = asset
             mom_data.append(asset_data[['Month', 'Asset', 'MoM']])
         
@@ -465,17 +466,21 @@ def create_investment_asset_analysis(df, asset_type=None):
             mom_clean = mom_df.dropna()
             
             if not mom_clean.empty:
-                # Create bar chart with asset as color
-                fig_mom = create_bar_chart(
-                    mom_clean,
-                    x_col='Month',
-                    y_col='MoM',
-                    color_col='Asset',
-                    x_label=get_chart_label('month'),
-                    y_label=get_chart_label('percentage_change'),
-                    y_format='percentage'
-                )
-                st.plotly_chart(fig_mom, use_container_width=True)
+                mom_pivot = mom_clean.pivot(index='Month', columns='Asset', values='MoM').reset_index().fillna(0)
+                asset_cols = [col for col in mom_pivot.columns if col != 'Month']
+                
+                if asset_cols:
+                    fig_mom = create_bar_chart(
+                        mom_pivot,
+                        x_col='Month',
+                        y_cols=asset_cols,
+                        x_label=get_chart_label('month'),
+                        y_label=get_chart_label('percentage_change'),
+                        y_format='percentage'
+                    )
+                    st.plotly_chart(fig_mom, use_container_width=True)
+                else:
+                    st.info("No asset data available for MoM analysis")
             else:
                 st.info("Not enough data for MoM analysis")
         else:
@@ -500,7 +505,7 @@ def create_investment_asset_analysis(df, asset_type=None):
             if not returns_clean.empty:
                 fig_box = create_box_plot(
                     returns_clean,
-                    y_col='Return',
+                    y_cols='Return',
                     color_col='Asset',
                     y_label=get_chart_label('percentage_change'),
                     y_format='percentage'
@@ -514,3 +519,270 @@ def create_investment_asset_analysis(df, asset_type=None):
     # Create charts in 2x2 grid layout
     create_chart_grid([create_asset_returns_time_series, create_asset_allocation_time_series], cols=2)
     create_chart_grid([create_mom_changes_chart, create_returns_boxplot], cols=2) 
+
+
+def create_pension_asset_analysis(df, cashflows_df=None, asset_type=None):
+    """
+    Create detailed pension asset analysis with actual returns (excluding cashflows), 
+    cumulative cashflows, and actual percentage changes.
+    
+    Args:
+        df (DataFrame): The main data DataFrame
+        cashflows_df (DataFrame): Pension cashflow data
+        asset_type (str, optional): Asset type to filter (default: Pensions)
+    """
+    from utils import (
+        filter_by_asset_type, 
+        calculate_actual_pension_returns,
+        get_cumulative_pension_cashflows,
+        calculate_actual_mom_changes
+    )
+    from utils.charts import create_time_series_chart, create_bar_chart, create_box_plot, get_chart_label
+    import pandas as pd
+    
+    # Create section header
+    create_section_header("Asset-Level Analysis", icon="📊")
+    
+    # Filter for pension assets
+    pension_df = filter_by_asset_type(df, asset_type)
+    
+    if pension_df.empty:
+        st.info("No pension data available for asset analysis")
+        return
+    
+    # Prepare monthly data by asset
+    pension_df['Month'] = pension_df['Timestamp'].dt.to_period('M')
+    monthly_by_asset = pension_df.groupby(['Month', 'Asset'])['Value'].sum().reset_index()
+    monthly_by_asset['Month'] = monthly_by_asset['Month'].dt.to_timestamp()
+    
+    if monthly_by_asset.empty:
+        st.info("No monthly pension data available")
+        return
+    
+    # 1. Percentage Returns Over Time (Actual Returns)
+    def create_actual_returns_time_series():
+        st.markdown("**Percentage Returns Over Time (Actual Returns)**")
+        
+        # Calculate actual returns using cashflow data
+        actual_returns = calculate_actual_pension_returns(pension_df, cashflows_df)
+        
+        if not actual_returns.empty:
+            # Pivot to get assets as columns
+            returns_pivot = actual_returns.pivot(index='Month', columns='Asset', values='Actual_Return')
+            returns_pivot = returns_pivot.reset_index()
+            
+            # Get asset columns (excluding Month)
+            asset_cols = [col for col in returns_pivot.columns if col != 'Month']
+            
+            if asset_cols:
+                fig_returns = create_time_series_chart(
+                    returns_pivot,
+                    x_col='Month',
+                    y_cols=asset_cols,
+                    x_label=get_chart_label('month'),
+                    y_label='Actual Return',
+                    y_format='percentage'
+                )
+                st.plotly_chart(fig_returns, use_container_width=True)
+            else:
+                st.info("No asset data available for returns analysis")
+        else:
+            st.info("Not enough data for actual returns analysis")
+
+    # 2. Asset Allocation Over Time (Cumulative Cashflows)
+    def create_cumulative_cashflows_chart():
+        st.markdown("**Cumulative Inflow/Outflow by Asset**")
+        
+        if cashflows_df is not None and not cashflows_df.empty:
+            cumulative_cashflows = get_cumulative_pension_cashflows(cashflows_df)
+            
+            if not cumulative_cashflows.empty:
+                # Pivot to get assets as columns, then fill gaps for proper stacking
+                cashflow_pivot = cumulative_cashflows.pivot(index='Month', columns='Asset', values='Cumulative_Cashflow')
+                cashflow_pivot = cashflow_pivot.ffill().fillna(0) # Forward-fill to carry values, then fill initial NaNs
+                cashflow_pivot = cashflow_pivot.reset_index()
+                
+                # Get asset columns (excluding Month)
+                asset_cols = [col for col in cashflow_pivot.columns if col != 'Month']
+                
+                if asset_cols:
+                    from utils.charts import create_area_chart
+                    fig_cashflows = create_area_chart(
+                        cashflow_pivot,
+                        x_col='Month',
+                        y_cols=asset_cols,
+                        x_label=get_chart_label('month'),
+                        y_label='Cumulative Cashflow (£)',
+                        y_format='currency',
+                        stacked=True
+                    )
+                    st.plotly_chart(fig_cashflows, use_container_width=True)
+                else:
+                    st.info("No cashflow data available")
+            else:
+                st.info("No cumulative cashflow data available")
+        else:
+            st.info("No cashflow data available for allocation analysis")
+
+    # 3. Actual Month-over-Month Changes
+    def create_actual_mom_changes_chart():
+        st.markdown("**Month-over-Month Changes by Asset (Actual Returns)**")
+        
+        actual_mom = calculate_actual_mom_changes(pension_df, cashflows_df)
+        
+        if not actual_mom.empty:
+            mom_pivot = actual_mom.pivot(index='Month', columns='Asset', values='Actual_MoM_Change').reset_index().fillna(0)
+            asset_cols = [col for col in mom_pivot.columns if col != 'Month']
+            
+            if asset_cols:
+                fig_mom = create_bar_chart(
+                    mom_pivot,
+                    x_col='Month',
+                    y_cols=asset_cols,
+                    x_label=get_chart_label('month'),
+                    y_label='Actual Change',
+                    y_format='percentage'
+                )
+                st.plotly_chart(fig_mom, use_container_width=True)
+            else:
+                st.info("No asset data available for actual MoM analysis")
+        else:
+            st.info("Not enough data for actual MoM analysis")
+
+    # 4. Actual Returns Distribution Box Plot
+    def create_actual_returns_boxplot():
+        st.markdown("**Actual Returns Distribution by Asset**")
+        
+        # Calculate actual returns using cashflow data
+        actual_returns = calculate_actual_pension_returns(pension_df, cashflows_df)
+        
+        if not actual_returns.empty:
+            # Filter out first month (which has 0% return)
+            returns_for_box = actual_returns[actual_returns['Actual_Return'] != 0.0]
+            
+            if not returns_for_box.empty:
+                fig_box = create_box_plot(
+                    returns_for_box,
+                    y_cols='Actual_Return',
+                    color_col='Asset',
+                    y_label='Actual Return',
+                    y_format='percentage'
+                )
+                st.plotly_chart(fig_box, use_container_width=True)
+            else:
+                st.info("Not enough data for returns distribution analysis")
+        else:
+            st.info("No actual returns data available")
+    
+    # Create charts in 2x2 grid layout
+    create_chart_grid([create_actual_returns_time_series, create_cumulative_cashflows_chart], cols=2)
+    create_chart_grid([create_actual_mom_changes_chart, create_actual_returns_boxplot], cols=2) 
+
+
+def create_pension_forecast_section(pension_df: pd.DataFrame, cashflows_df: pd.DataFrame):
+    """
+    Creates the full UI section for pension forecasting, including controls and charts.
+
+    Args:
+        pension_df (pd.DataFrame): DataFrame containing the historical pension values.
+    """
+    from utils import forecast_pension_growth
+    from ..config import CURRENCY_FORMAT
+
+    create_section_header("Pension Growth Forecast", icon="🔮")
+
+    # --- 1. User Input Controls ---
+    with st.expander("Adjust Forecast Assumptions", expanded=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            forecast_years = st.slider("Forecast Horizon (Years)", min_value=5, max_value=40, value=20, step=1)
+        with col2:
+            annual_return = st.slider("Expected Annual Return (%)", min_value=3.0, max_value=12.0, value=7.0, step=0.5)
+        with col3:
+            monthly_contribution = st.number_input("Future Monthly Contribution (£)", min_value=0, value=500, step=50)
+
+    # --- 2. Run Forecast ---
+    # Prepare historical data for forecasting function
+    historical_agg = pension_df.groupby(pension_df['Timestamp'].dt.to_period('M').dt.to_timestamp())['Value'].sum().reset_index()
+    historical_agg.rename(columns={'Timestamp': 'Month'}, inplace=True)
+    
+    projection_df = forecast_pension_growth(
+        historical_df=historical_agg,
+        forecast_years=forecast_years,
+        monthly_contribution=monthly_contribution,
+        annual_return_rate=annual_return / 100
+    )
+
+    if projection_df.empty:
+        st.warning("Could not generate a forecast with the provided data.")
+        return
+
+    # --- 3. Calculate and Display Metric Cards ---
+    st.markdown("##### Forecast Summary")
+
+    # Calculate summary metrics from the projection results
+    final_projection_data = projection_df[projection_df['Type'] == 'Forecast'].iloc[-1]
+    median_final_value = final_projection_data['Projected_Value']
+    lower_final_value = final_projection_data['Lower_Bound']
+    upper_final_value = final_projection_data['Upper_Bound']
+    
+    # Calculate total contributions (past + future)
+    future_contributions = monthly_contribution * 12 * forecast_years
+    past_contributions = 0
+    if cashflows_df is not None and not cashflows_df.empty:
+        # Filter for only contribution types to get historical contributions
+        contribution_flows = cashflows_df[cashflows_df['Cashflow Type'] == CASHFLOW_TYPES['CONTRIBUTION']]
+        if not contribution_flows.empty:
+            past_contributions = contribution_flows['Value'].sum()
+            
+    total_contributions = past_contributions + future_contributions
+
+    create_metric_grid([
+        lambda: emphasis_card(
+            title="Median Forecast Value",
+            metric=f"£{median_final_value:,.0f}",
+            caption=f"After {int(forecast_years)} years",
+            emphasis_color=BRAND_SUCCESS
+        ),
+        lambda: emphasis_card(
+            title="Likely Range (90% CI)",
+            metric=f"£{lower_final_value:,.0f} - £{upper_final_value:,.0f}",
+            caption="Range of likely outcomes",
+            emphasis_color=BRAND_INFO
+        ),
+        lambda: emphasis_card(
+            title="Total Contributions",
+            metric=f"£{total_contributions:,.0f}",
+            caption="Your direct investment",
+            emphasis_color=BRAND_PRIMARY
+        ),
+    ], cols=3)
+
+    # --- 4. Display Chart ---
+    st.markdown("##### Growth Projection")
+    # Separate historical from forecast for styling
+    historical_trace = projection_df[projection_df['Type'] == 'Historical']
+    forecast_trace = projection_df[projection_df['Type'] == 'Forecast']
+
+    fig = create_time_series_chart(
+        df=projection_df,
+        x_col='Month',
+        y_cols=['Projected_Value'],
+        x_label="Year",
+        y_label="Portfolio Value",
+        y_format='currency',
+        confidence_band={'lower': 'Lower_Bound', 'upper': 'Upper_Bound'}
+    )
+    
+    # Customize line styles
+    fig.for_each_trace(lambda trace: trace.update(line=dict(dash='dash')) if trace.name == 'Projected_Value' else ())
+    # Re-add historical data with a solid line to make it stand out
+    fig.add_trace(go.Scatter(
+        x=historical_trace['Month'],
+        y=historical_trace['Projected_Value'],
+        mode='lines',
+        line=dict(color=BRAND_PRIMARY, width=3),
+        name='Historical Value'
+    ))
+
+    st.plotly_chart(fig, use_container_width=True) 
