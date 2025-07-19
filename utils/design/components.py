@@ -351,6 +351,149 @@ def create_portfolio_analytics_charts(df, asset_type=None, section_title="Portfo
         create_chart_grid([create_total_portfolio_mom_chart, create_current_allocation_pie_chart], cols=2) 
 
 
+def create_vehicle_analytics_charts(car_assets_df, car_expenses_df, car_payments_df):
+    """
+    Create standardized vehicle analytics charts section.
+    
+    Args:
+        car_assets_df (DataFrame): Vehicle assets data
+        car_expenses_df (DataFrame): Vehicle expenses data
+        car_payments_df (DataFrame): Vehicle payments data
+    """
+    import streamlit as st
+    import pandas as pd
+    import plotly.graph_objs as go
+    
+    from utils import (
+        calculate_car_equity, get_car_equity_trends, calculate_car_monthly_costs
+    )
+    from utils.charts import (
+        create_time_series_chart, create_bar_chart, create_pie_chart, get_chart_label
+    )
+    from .tokens import CHART_TEMPLATE, CHART_HEIGHT
+    
+    # Create section header
+    create_section_header("Vehicle Analytics", icon="📈")
+    
+    # Prepare data
+    equity_trends_df = get_car_equity_trends(car_assets_df)
+    monthly_costs_df = calculate_car_monthly_costs(car_expenses_df, car_payments_df, car_assets_df)
+    
+    # Vehicle analytics charts using chart grid
+    def create_equity_position_chart():
+        st.markdown("**Vehicle Equity Position**")
+        if not equity_trends_df.empty:
+            # Get vehicle columns (excluding 'Timestamp')
+            vehicle_cols = [col for col in equity_trends_df.columns if col != 'Timestamp']
+            fig_equity = create_time_series_chart(
+                equity_trends_df,
+                x_col='Timestamp',
+                y_cols=vehicle_cols,
+                x_label=get_chart_label('date'),
+                y_label=get_chart_label('equity'),
+                y_format='currency'
+            )
+            st.plotly_chart(fig_equity, use_container_width=True)
+        else:
+            st.info("Insufficient data for equity trends chart.")
+
+    def create_monthly_costs_chart():
+        st.markdown("**Monthly Combined Car Costs**")
+        if not monthly_costs_df.empty:
+            # Get cost columns (excluding 'Month' and 'Total')
+            cost_cols = [col for col in monthly_costs_df.columns if col not in ['Month', 'Total']]
+            
+            # Filter out columns with no data
+            cost_cols = [col for col in cost_cols if monthly_costs_df[col].sum() > 0]
+            
+            if cost_cols:
+                # Use the standardized area chart function with stacking
+                from utils.charts import create_area_chart
+                fig_costs = create_area_chart(
+                    df=monthly_costs_df,
+                    x_col='Month',
+                    y_cols=cost_cols,
+                    x_label="Month",
+                    y_label="Cost (£)",
+                    y_format='currency',
+                    height=CHART_HEIGHT,
+                    stacked=True
+                )
+                
+                st.plotly_chart(fig_costs, use_container_width=True)
+            else:
+                st.info("No cost data available for chart.")
+        else:
+            st.info("Insufficient data for monthly costs chart.")
+
+    def create_cost_breakdown_pie():
+        st.markdown("**Latest Month Cost Breakdown**")
+        if monthly_costs_df is not None and not monthly_costs_df.empty:
+            # Get the latest month data
+            latest_month = monthly_costs_df.iloc[-1]
+            
+            # Create breakdown for latest month
+            cost_breakdown = []
+            for cost_type in monthly_costs_df.columns:
+                if cost_type not in ['Month', 'Total']:
+                    amount = latest_month[cost_type]
+                    if amount > 0:  # Only include non-zero costs
+                        cost_breakdown.append({
+                            'Cost_Type': cost_type,
+                            'Amount': amount
+                        })
+            
+            if cost_breakdown:
+                breakdown_df = pd.DataFrame(cost_breakdown)
+                fig_expenses = create_pie_chart(
+                    breakdown_df,
+                    names_col='Cost_Type',
+                    values_col='Amount'
+                )
+                st.plotly_chart(fig_expenses, use_container_width=True)
+            else:
+                st.info("No cost data available for latest month.")
+        else:
+            st.info("No monthly cost data available for breakdown.")
+
+    def create_monthly_mileage_chart():
+        st.markdown("**Monthly Net Mileage**")
+        if not car_assets_df.empty:
+            # Calculate monthly net mileage (difference from previous month)
+            monthly_mileage = car_assets_df.groupby(car_assets_df['Timestamp'].dt.to_period('M'))['Mileage'].sum().reset_index()
+            monthly_mileage['Month'] = monthly_mileage['Timestamp'].dt.to_timestamp()
+            monthly_mileage = monthly_mileage.sort_values('Month')
+            
+            # Calculate net mileage (difference from previous month)
+            monthly_mileage['Net_Mileage'] = monthly_mileage['Mileage'].diff()
+            
+            if len(monthly_mileage) > 1:
+                # Remove first row (no previous month to calculate difference)
+                net_mileage_data = monthly_mileage[monthly_mileage['Net_Mileage'].notna()].copy()
+                
+                fig_mileage = create_bar_chart(
+                    net_mileage_data,
+                    x_col='Month',
+                    y_cols='Net_Mileage',
+                    x_label=get_chart_label('month'),
+                    y_label='Net Mileage',
+                    y_format='number'
+                )
+                st.plotly_chart(fig_mileage, use_container_width=True)
+            else:
+                st.info("Insufficient data for monthly mileage chart.")
+        else:
+            st.info("No mileage data available.")
+
+    # Create 2x2 chart grid
+    create_chart_grid([
+        create_equity_position_chart,
+        create_monthly_costs_chart,
+        create_cost_breakdown_pie,
+        create_monthly_mileage_chart
+    ], cols=2) 
+
+
 def create_investment_asset_analysis(df, asset_type=None):
     """
     Create detailed investment asset analysis with allocation time series, MoM changes, and returns distribution.
@@ -688,6 +831,7 @@ def create_pension_forecast_section(pension_df: pd.DataFrame, cashflows_df: pd.D
     """
     from utils import forecast_pension_growth
     from ..config import CURRENCY_FORMAT
+    from utils.charts import create_time_series_chart
 
     create_section_header("Pension Growth Forecast", icon="🔮")
 

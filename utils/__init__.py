@@ -1,6 +1,6 @@
 """Utility modules for the financial dashboard app."""
 
-from .etl.data_loader import load_data, load_pension_cashflows, filter_data_by_date_range, get_month_range
+from .etl.data_loader import load_data, load_pension_cashflows, filter_data_by_date_range, get_month_range, load_car_assets, load_car_payments, load_car_expenses
 from .etl.asset_classifier import classify_asset_types, get_asset_classification_rules
 from .config import (
     ASSET_TYPES, ASSET_SUBTYPES, DATE_FORMAT, DISPLAY_DATE_FORMAT, SHORT_DATE_FORMAT, CURRENCY_FORMAT, PERCENTAGE_FORMAT,
@@ -8,7 +8,9 @@ from .config import (
     LAYOUT, INITIAL_SIDEBAR_STATE, MIN_DATA_POINTS_FOR_FORECAST, SEASONAL_PERIODS, CONFIDENCE_LEVEL, 
     SHEET_NAME, DATE_COLUMN, AMOUNT_COLUMN, CATEGORY_COLUMN, DESCRIPTION_COLUMN, VOLATILITY_WINDOW, 
     VAR_CONFIDENCE_LEVEL, MAX_DRAWDOWN_WINDOW, BENCHMARK_RETURN, INFLATION_RATE, validate_config,
-    PENSION_CASHFLOW_SHEET, CASHFLOW_TYPE_COLUMN, NOTES_COLUMN, CASHFLOW_TYPES, CASHFLOW_DESCRIPTIONS
+    PENSION_CASHFLOW_SHEET, CASHFLOW_TYPE_COLUMN, NOTES_COLUMN, CASHFLOW_TYPES, CASHFLOW_DESCRIPTIONS,
+    CAR_ASSETS_SHEET, CAR_PAYMENTS_SHEET, CAR_EXPENSES_SHEET, CAR_LOAN_STATUSES, CAR_PAYMENT_TYPES, 
+    CAR_EXPENSE_TYPES, DEFAULT_CAR_FORECAST_PERIODS
 )
 from .data_processing import (
     filter_by_asset_type,
@@ -25,10 +27,14 @@ from .data_processing import (
     calculate_actual_pension_returns,
     get_cumulative_pension_cashflows,
     calculate_actual_mom_changes,
-    forecast_pension_growth
+    forecast_pension_growth,
+    calculate_car_equity,
+    calculate_car_monthly_costs,
+    get_car_equity_trends, calculate_vehicle_metrics,
+    calculate_vehicle_summary_metrics
 )
 from .charts import create_asset_type_time_series, create_asset_type_breakdown
-from .design import simple_card, emphasis_card, complex_card, complex_emphasis_card, create_metric_grid, create_chart_grid, create_section_header, create_page_header, create_pension_asset_analysis, create_pension_forecast_section
+from .design import simple_card, emphasis_card, complex_card, complex_emphasis_card, create_metric_grid, create_chart_grid, create_section_header, create_page_header, create_pension_asset_analysis, create_pension_forecast_section, create_vehicle_analytics_charts
 from .design.tokens import (
     # Color tokens
     BRAND_PRIMARY, BRAND_SECONDARY, BRAND_SUCCESS, BRAND_WARNING, BRAND_ERROR, BRAND_INFO,
@@ -70,6 +76,8 @@ __all__ = [
     'SHEET_NAME', 'DATE_COLUMN', 'AMOUNT_COLUMN', 'CATEGORY_COLUMN', 'DESCRIPTION_COLUMN', 'VOLATILITY_WINDOW', 
     'VAR_CONFIDENCE_LEVEL', 'MAX_DRAWDOWN_WINDOW', 'BENCHMARK_RETURN', 'INFLATION_RATE', 'validate_config',
     'PENSION_CASHFLOW_SHEET', 'CASHFLOW_TYPE_COLUMN', 'NOTES_COLUMN', 'CASHFLOW_TYPES', 'CASHFLOW_DESCRIPTIONS',
+    'CAR_ASSETS_SHEET', 'CAR_PAYMENTS_SHEET', 'CAR_EXPENSES_SHEET', 'CAR_LOAN_STATUSES', 'CAR_PAYMENT_TYPES', 
+    'CAR_EXPENSE_TYPES', 'DEFAULT_CAR_FORECAST_PERIODS',
     
     # ETL functions (core data loading and transformation)
     'load_data',
@@ -96,6 +104,12 @@ __all__ = [
     'get_cumulative_pension_cashflows',
     'calculate_actual_mom_changes',
     'forecast_pension_growth',
+    # Car data processing functions
+    'calculate_car_equity',
+    'calculate_car_monthly_costs',
+    'get_car_equity_trends',
+    'calculate_vehicle_metrics',
+    'calculate_vehicle_summary_metrics',
 
     # Chart functions
     'create_asset_type_time_series',
@@ -112,6 +126,7 @@ __all__ = [
     'create_page_header',
     'create_pension_asset_analysis',
     'create_pension_forecast_section',
+    'create_vehicle_analytics_charts',
 
     # Design tokens
     'BRAND_PRIMARY', 'BRAND_SECONDARY', 'BRAND_SUCCESS', 'BRAND_WARNING', 'BRAND_ERROR', 'BRAND_INFO',

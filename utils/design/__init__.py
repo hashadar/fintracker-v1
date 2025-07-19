@@ -46,4 +46,4 @@ from .tokens import (
 )
 
 from .cards import simple_card, emphasis_card, complex_card, complex_emphasis_card
-from .components import create_metric_grid, create_chart_grid, create_section_header, create_page_header, create_pension_asset_analysis, create_pension_forecast_section 
+from .components import create_metric_grid, create_chart_grid, create_section_header, create_page_header, create_pension_asset_analysis, create_pension_forecast_section, create_vehicle_analytics_charts 

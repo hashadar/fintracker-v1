@@ -11,6 +11,7 @@ ASSET_TYPES = {
     'INVESTMENTS': 'Investments', 
     'PENSIONS': 'Pensions',
     'PROPERTY': 'Property',
+    'VEHICLES': 'Vehicles',
     'OTHER': 'Other'
 }
 
@@ -19,7 +20,8 @@ ASSET_SUBTYPES = {
     'INVESTMENTS': ['Stocks', 'Bonds', 'ETFs', 'Mutual Funds', 'Crypto'],
     'PENSIONS': ['Workplace Pension', 'Personal Pension', 'SIPP'],
     'PROPERTY': ['Primary Residence', 'Investment Property'],
-    'OTHER': ['Collectibles', 'Vehicles', 'Other Assets']
+    'VEHICLES': ['Car', 'Motorcycle', 'Van', 'Other Vehicle'],
+    'OTHER': ['Collectibles', 'Other Assets']
 }
 
 # Date and Currency Formats
@@ -60,6 +62,44 @@ PENSION_CASHFLOW_SHEET = 'Pension Cashflows'
 CASHFLOW_TYPE_COLUMN = 'Cashflow Type'
 NOTES_COLUMN = 'Notes'
 
+# Car Tracking Configuration
+CAR_ASSETS_SHEET = 'Car Assets'
+CAR_PAYMENTS_SHEET = 'Car Payments'
+CAR_EXPENSES_SHEET = 'Car Expenses'
+
+# Car-specific column names
+CAR_LOAN_STATUS_COLUMN = 'Loan_Status'
+CAR_LOAN_BALANCE_COLUMN = 'Loan_Balance'
+CAR_VALUE_COLUMN = 'Car_Value'
+CAR_MILEAGE_COLUMN = 'Mileage'
+CAR_PAYMENT_AMOUNT_COLUMN = 'Payment_Amount'
+CAR_PAYMENT_TYPE_COLUMN = 'Payment_Type'
+CAR_EXPENSE_TYPE_COLUMN = 'Expense_Type'
+CAR_PROVIDER_COLUMN = 'Platform/Provider'
+
+# Car loan status options
+CAR_LOAN_STATUSES = {
+    'FINANCED': 'Financed',
+    'OWNED': 'Owned'
+}
+
+# Car payment types
+CAR_PAYMENT_TYPES = {
+    'REGULAR': 'Regular',
+    'EXTRA': 'Extra',
+    'REFINANCE': 'Refinance',
+    'FINAL': 'Final'
+}
+
+# Car expense types
+CAR_EXPENSE_TYPES = {
+    'INSURANCE': 'Insurance',
+    'ROAD_TAX': 'Road Tax',
+    'FUEL': 'Fuel',
+    'MAINTENANCE': 'Maintenance',
+    'OTHER': 'Other'
+}
+
 # Cashflow Types
 CASHFLOW_TYPES = {
     'CONTRIBUTION': 'Contribution',
@@ -82,6 +122,11 @@ MAX_DRAWDOWN_WINDOW = 12  # months for max drawdown calculation
 # Performance Metrics
 BENCHMARK_RETURN = 0.08  # 8% annual benchmark return
 INFLATION_RATE = 0.025  # 2.5% annual inflation rate
+
+# Car tracking constants
+DEFAULT_CAR_FORECAST_PERIODS = 12  # months
+CAR_DEPRECIATION_RATE = 0.15  # 15% annual depreciation
+CAR_MAINTENANCE_FREQUENCY = 12  # months between services
 
 
 def validate_config():
@@ -183,7 +228,18 @@ def validate_config():
         'DESCRIPTION_COLUMN': DESCRIPTION_COLUMN,
         'PENSION_CASHFLOW_SHEET': PENSION_CASHFLOW_SHEET,
         'CASHFLOW_TYPE_COLUMN': CASHFLOW_TYPE_COLUMN,
-        'NOTES_COLUMN': NOTES_COLUMN
+        'NOTES_COLUMN': NOTES_COLUMN,
+        'CAR_ASSETS_SHEET': CAR_ASSETS_SHEET,
+        'CAR_PAYMENTS_SHEET': CAR_PAYMENTS_SHEET,
+        'CAR_EXPENSES_SHEET': CAR_EXPENSES_SHEET,
+        'CAR_LOAN_STATUS_COLUMN': CAR_LOAN_STATUS_COLUMN,
+        'CAR_LOAN_BALANCE_COLUMN': CAR_LOAN_BALANCE_COLUMN,
+        'CAR_VALUE_COLUMN': CAR_VALUE_COLUMN,
+        'CAR_MILEAGE_COLUMN': CAR_MILEAGE_COLUMN,
+        'CAR_PAYMENT_AMOUNT_COLUMN': CAR_PAYMENT_AMOUNT_COLUMN,
+        'CAR_PAYMENT_TYPE_COLUMN': CAR_PAYMENT_TYPE_COLUMN,
+        'CAR_EXPENSE_TYPE_COLUMN': CAR_EXPENSE_TYPE_COLUMN,
+        'CAR_PROVIDER_COLUMN': CAR_PROVIDER_COLUMN
     }
     
     for name, value in string_constants.items():

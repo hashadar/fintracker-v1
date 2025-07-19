@@ -1,20 +1,23 @@
-# Utility Modules v2.0.0
+# Utility Modules v2.1.0
 
 This directory contains general utility modules that support the main financial dashboard application.
 
-**This version introduces new utilities for handling cashflow data and performing financial forecasting.**
+**This version introduces new utilities for handling cashflow data, performing financial forecasting, and comprehensive vehicle tracking.**
 
 ## Modules
 
 ### `etl/`
-- `data_loader.py`: Loads and preprocesses financial data from Google Sheets, now including pension cashflows
-- `asset_classifier.py`: Classifies assets by type and platform
+- `data_loader.py`: Loads and preprocesses financial data from Google Sheets, now including pension cashflows and vehicle data
+- `asset_classifier.py`: Classifies assets by type and platform, including vehicles
 
 ### `data_processing.py`
 - Data processing utilities for filtering, aggregation, and rolling metrics
 - **New**: `calculate_actual_pension_returns`: Calculates true pension returns by accounting for cashflows
 - **New**: `get_cumulative_pension_cashflows`: Aggregates cashflows over time for charting
 - **New**: `forecast_pension_growth`: A simple Monte Carlo simulation engine for forecasting future pension values
+- **New**: `calculate_vehicle_metrics`: Calculates vehicle-specific metrics including cost per mile and latest costs
+- **New**: `calculate_vehicle_summary_metrics`: Calculates vehicle summary metrics including equity and mileage
+- **New**: `calculate_car_monthly_costs`: Processes monthly vehicle costs with loan payments and expenses
 
 ### `charts/`
 - `base.py`: Base chart functions (time series, bar, pie, area, etc.), now with enhanced support for grouped bar charts
@@ -23,7 +26,7 @@ This directory contains general utility modules that support the main financial 
 
 ### `design/`
 - `cards.py`: Reusable card components
-- `components.py`: Layout components
+- `components.py`: Layout components including vehicle analytics charts
 - `tokens.py`: Design tokens (colors, spacing, fonts, chart config)
 
 ### `config.py`
@@ -106,6 +109,19 @@ These modules are imported and used by the main application (`Home.py`) and the 
 6. `charts/` is then used to generate charts (like grouped bar charts for MoM changes) and card components.
 7. `design/tokens.py` provides consistent styling throughout this process.
 8. `config.py` provides underlying definitions (like cashflow types) and validation.
+
+## Data Flow Example (Vehicle Analysis)
+
+1. `data_loader.load_car_assets()` loads vehicle asset data.
+2. `data_loader.load_car_payments()` loads vehicle payment data.
+3. `data_loader.load_car_expenses()` loads vehicle expense data.
+4. All datasets are passed to the `pages/6_Vehicles.py` module.
+5. `data_processing.calculate_vehicle_summary_metrics()` calculates summary metrics.
+6. `data_processing.calculate_vehicle_metrics()` calculates detailed metrics.
+7. `design/components.py` creates vehicle analytics charts with stacked area charts.
+8. `charts/` is used to generate additional visualizations.
+9. `design/tokens.py` provides consistent styling throughout this process.
+10. `config.py` provides underlying definitions (like vehicle types) and validation.
 
 ## Best Practices
 

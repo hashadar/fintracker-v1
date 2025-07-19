@@ -7,7 +7,9 @@ from datetime import datetime
 from .config import (
     ASSET_TYPES, DEFAULT_ROLLING_WINDOW, RISK_FREE_RATE, CONFIDENCE_LEVEL,
     VOLATILITY_WINDOW, VAR_CONFIDENCE_LEVEL, MAX_DRAWDOWN_WINDOW,
-    MIN_DATA_POINTS_FOR_FORECAST, SEASONAL_PERIODS
+    MIN_DATA_POINTS_FOR_FORECAST, SEASONAL_PERIODS,
+    CAR_LOAN_STATUSES, CAR_PAYMENT_TYPES, CAR_EXPENSE_TYPES,
+    DEFAULT_CAR_FORECAST_PERIODS, CAR_DEPRECIATION_RATE, CAR_MAINTENANCE_FREQUENCY
 )
 
 
@@ -691,3 +693,292 @@ def forecast_pension_growth(
     final_df = pd.concat([historical_formatted.iloc[:-1], forecast_results], ignore_index=True)
 
     return final_df 
+
+# Car-specific data processing functions
+
+def calculate_car_equity(car_assets_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate equity for each car based on loan status.
+    
+    Args:
+        car_assets_df: DataFrame with car assets data including Loan_Status, Car_Value, Loan_Balance
+    
+    Returns:
+        DataFrame with equity calculations added
+    """
+    if car_assets_df is None or car_assets_df.empty:
+        return pd.DataFrame()
+    
+    df = car_assets_df.copy()
+    
+    # Calculate equity based on loan status
+    def calculate_equity(row):
+        if pd.isna(row['Car_Value']):
+            return None
+        
+        if row['Loan_Status'] == CAR_LOAN_STATUSES['OWNED']:
+            return row['Car_Value']  # 100% equity for owned vehicles
+        elif row['Loan_Status'] == CAR_LOAN_STATUSES['FINANCED']:
+            loan_balance = row['Loan_Balance'] if pd.notna(row['Loan_Balance']) else 0
+            return row['Car_Value'] - loan_balance
+        else:
+            return None
+    
+    df['Equity'] = df.apply(calculate_equity, axis=1)
+    df['Equity_Percentage'] = (df['Equity'] / df['Car_Value'] * 100).where(df['Car_Value'] > 0)
+    df['LTV_Ratio'] = (df['Loan_Balance'] / df['Car_Value'] * 100).where(
+        (df['Loan_Status'] == CAR_LOAN_STATUSES['FINANCED']) & (df['Car_Value'] > 0)
+    )
+    
+    return df
+
+def calculate_car_monthly_costs(car_expenses_df: pd.DataFrame, car_payments_df: pd.DataFrame, 
+                               car_assets_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate monthly car costs including loan payments and operating expenses.
+    
+    Args:
+        car_expenses_df: DataFrame with car expenses data
+        car_payments_df: DataFrame with car payments data
+        car_assets_df: DataFrame with car assets data
+    
+    Returns:
+        DataFrame with monthly cost breakdown
+    """
+    if car_expenses_df is None or car_expenses_df.empty:
+        return pd.DataFrame()
+    
+    # Prepare expenses data
+    expenses_df = car_expenses_df.copy()
+    expenses_df['Month'] = expenses_df['Timestamp'].dt.to_period('M')
+    
+    # Group expenses by month and type
+    monthly_expenses = expenses_df.groupby(['Month', 'Expense_Type'])['Amount'].sum().reset_index()
+    
+    # Pivot to get expense types as columns
+    monthly_expenses_pivot = monthly_expenses.pivot_table(
+        index='Month',
+        columns='Expense_Type',
+        values='Amount',
+        aggfunc='sum',
+        fill_value=0
+    ).reset_index()
+    
+    # Add loan payments if available
+    if car_payments_df is not None and not car_payments_df.empty:
+        payments_df = car_payments_df.copy()
+        payments_df['Month'] = payments_df['Timestamp'].dt.to_period('M')
+        
+        # Include all payment types (not just regular) to ensure we capture all loan payments
+        monthly_loan_payments = payments_df.groupby('Month')['Payment_Amount'].sum().reset_index()
+        
+        # Merge with expenses
+        monthly_expenses_pivot = monthly_expenses_pivot.merge(
+            monthly_loan_payments, on='Month', how='left'
+        )
+        monthly_expenses_pivot['Loan_Payment'] = monthly_expenses_pivot['Payment_Amount'].fillna(0)
+        monthly_expenses_pivot = monthly_expenses_pivot.drop('Payment_Amount', axis=1)
+    else:
+        monthly_expenses_pivot['Loan_Payment'] = 0
+    
+    # Calculate total monthly costs
+    expense_columns = [col for col in monthly_expenses_pivot.columns 
+                      if col not in ['Month', 'Loan_Payment']]
+    monthly_expenses_pivot['Total'] = monthly_expenses_pivot[expense_columns + ['Loan_Payment']].sum(axis=1)
+    
+    # Convert Month back to timestamp
+    monthly_expenses_pivot['Month'] = monthly_expenses_pivot['Month'].dt.to_timestamp()
+    
+    return monthly_expenses_pivot
+
+
+
+def get_car_equity_trends(car_assets_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create equity trends over time for cars.
+    
+    Args:
+        car_assets_df: DataFrame with car assets data
+    
+    Returns:
+        DataFrame with equity trends over time
+    """
+    if car_assets_df is None or car_assets_df.empty:
+        return pd.DataFrame()
+    
+    # Calculate equity for all data points
+    df_with_equity = calculate_car_equity(car_assets_df)
+    
+    if df_with_equity.empty:
+        return pd.DataFrame()
+    
+    # Create time series of equity by car
+    equity_trends = df_with_equity.groupby(['Timestamp', 'Asset'])['Equity'].sum().reset_index()
+    
+    # Pivot to get cars as columns
+    equity_pivot = equity_trends.pivot_table(
+        index='Timestamp',
+        columns='Asset',
+        values='Equity',
+        aggfunc='sum'
+    ).reset_index()
+    
+    return equity_pivot
+
+
+def _calculate_ytd_mileage(car_assets_df: pd.DataFrame) -> float:
+    """
+    Helper function to calculate YTD mileage for vehicles.
+    
+    Args:
+        car_assets_df: DataFrame with car assets data
+    
+    Returns:
+        Total YTD mileage across all vehicles
+    """
+    from datetime import datetime
+    
+    if car_assets_df is None or car_assets_df.empty:
+        return 0.0
+    
+    current_year = datetime.now().year
+    
+    # Get first mileage reading of the year for each vehicle
+    ytd_start_data = car_assets_df[car_assets_df['Timestamp'].dt.year == current_year].copy()
+    if ytd_start_data.empty:
+        return 0.0
+    
+    # Group by vehicle and get the earliest reading of the year
+    first_readings = ytd_start_data.groupby('Asset')['Mileage'].first().reset_index()
+    
+    # Get latest data for each car
+    car_assets_with_equity = calculate_car_equity(car_assets_df)
+    latest_car_data = car_assets_with_equity.groupby('Asset').last().reset_index()
+    latest_readings = latest_car_data[['Asset', 'Mileage']]
+    
+    # Merge to get first and latest readings for each vehicle
+    mileage_comparison = latest_readings.merge(first_readings, on='Asset', suffixes=('_latest', '_first'))
+    
+    # Calculate YTD mileage for each vehicle
+    mileage_comparison['ytd_mileage'] = mileage_comparison['Mileage_latest'] - mileage_comparison['Mileage_first']
+    return mileage_comparison['ytd_mileage'].sum()
+
+
+def calculate_vehicle_metrics(car_assets_df: pd.DataFrame, car_expenses_df: pd.DataFrame, 
+                            car_payments_df: pd.DataFrame) -> Dict[str, float]:
+    """
+    Calculate comprehensive vehicle metrics for dashboard display.
+    
+    Args:
+        car_assets_df: DataFrame with car assets data
+        car_expenses_df: DataFrame with car expenses data
+        car_payments_df: DataFrame with car payments data
+    
+    Returns:
+        Dictionary with vehicle metrics
+    """
+    from datetime import datetime
+    
+    metrics = {
+        'latest_loan_payment': 0.0,
+        'latest_monthly_expenses': 0.0,
+        'latest_month_combined_costs': 0.0,
+        'cost_per_mile': 0.0
+    }
+    
+    # Get latest loan payment
+    if car_payments_df is not None and not car_payments_df.empty:
+        latest_payment = car_payments_df.sort_values('Timestamp').iloc[-1]
+        metrics['latest_loan_payment'] = latest_payment['Payment_Amount'] if pd.notna(latest_payment['Payment_Amount']) else 0.0
+    
+    # Get latest monthly expenses
+    if car_expenses_df is not None and not car_expenses_df.empty:
+        # Get the latest month with expenses
+        car_expenses_df_copy = car_expenses_df.copy()
+        car_expenses_df_copy['Month'] = car_expenses_df_copy['Timestamp'].dt.to_period('M')
+        latest_month = car_expenses_df_copy['Month'].max()
+        latest_month_expenses = car_expenses_df_copy[car_expenses_df_copy['Month'] == latest_month]
+        metrics['latest_monthly_expenses'] = latest_month_expenses['Amount'].sum() if not latest_month_expenses.empty else 0.0
+    
+    # Calculate combined loan + expenses for latest month
+    metrics['latest_month_combined_costs'] = metrics['latest_loan_payment'] + metrics['latest_monthly_expenses']
+    
+    # Calculate YTD mileage for cost per mile calculation
+    ytd_mileage = _calculate_ytd_mileage(car_assets_df)
+    
+    # Calculate cost per mile (including loan payments and expenses)
+    total_ytd_costs = 0.0
+    current_year = datetime.now().year
+    
+    if car_expenses_df is not None and not car_expenses_df.empty:
+        # Get YTD expenses
+        ytd_expenses = car_expenses_df[car_expenses_df['Timestamp'].dt.year == current_year]
+        total_ytd_costs += ytd_expenses['Amount'].sum() if not ytd_expenses.empty else 0.0
+
+    if car_payments_df is not None and not car_payments_df.empty:
+        # Get YTD loan payments
+        ytd_payments = car_payments_df[car_payments_df['Timestamp'].dt.year == current_year]
+        total_ytd_costs += ytd_payments['Payment_Amount'].sum() if not ytd_payments.empty else 0.0
+
+    # Calculate cost per mile
+    if ytd_mileage > 0:
+        metrics['cost_per_mile'] = total_ytd_costs / ytd_mileage
+    
+    return metrics 
+
+
+def calculate_vehicle_summary_metrics(car_assets_df: pd.DataFrame) -> Dict[str, Union[float, int, str]]:
+    """
+    Calculate comprehensive vehicle summary metrics for dashboard display.
+    
+    Args:
+        car_assets_df: DataFrame with car assets data
+    
+    Returns:
+        Dictionary with vehicle summary metrics
+    """
+    from datetime import datetime
+    
+    metrics = {
+        'total_car_value': 0.0,
+        'total_equity': 0.0,
+        'total_loan_balance': 0.0,
+        'financed_count': 0,
+        'owned_count': 0,
+        'vehicle_names_display': "No vehicles",
+        'ytd_mileage': 0,
+        'latest_mileage': 0
+    }
+    
+    if car_assets_df is None or car_assets_df.empty:
+        return metrics
+    
+    # Calculate equity for all cars
+    car_assets_with_equity = calculate_car_equity(car_assets_df)
+    
+    # Get latest data for each car
+    latest_car_data = car_assets_with_equity.groupby('Asset').last().reset_index()
+    
+    # Calculate summary metrics
+    metrics['total_car_value'] = latest_car_data['Car_Value'].sum() if not latest_car_data['Car_Value'].isna().all() else 0.0
+    metrics['total_equity'] = latest_car_data['Equity'].sum() if not latest_car_data['Equity'].isna().all() else 0.0
+    metrics['total_loan_balance'] = latest_car_data['Loan_Balance'].sum() if not latest_car_data['Loan_Balance'].isna().all() else 0.0
+    
+    # Count vehicles by status
+    from utils import CAR_LOAN_STATUSES
+    metrics['financed_count'] = len(latest_car_data[latest_car_data['Loan_Status'] == CAR_LOAN_STATUSES['FINANCED']])
+    metrics['owned_count'] = len(latest_car_data[latest_car_data['Loan_Status'] == CAR_LOAN_STATUSES['OWNED']])
+    
+    # Get vehicle names for display
+    vehicle_names = latest_car_data['Asset'].tolist()
+    metrics['vehicle_names_display'] = ", ".join(vehicle_names) if vehicle_names else "No vehicles"
+    
+    # Calculate YTD mileage using helper function
+    metrics['ytd_mileage'] = _calculate_ytd_mileage(car_assets_df)
+    
+    # Calculate latest total mileage
+    if not car_assets_df.empty:
+        latest_mileage_data = car_assets_df.groupby('Asset')['Mileage'].max()
+        metrics['latest_mileage'] = latest_mileage_data.sum()
+    
+    return metrics 

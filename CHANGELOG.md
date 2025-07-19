@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.h
 
 ---
 
+## [2.1.0] - 2025-07-19
+
+### Added
+- **Vehicle Tracking System**: Comprehensive vehicle tracking for both financed and owned vehicles
+- **Vehicle Dashboard**: Dedicated page with summary metrics, analytics charts, and cost analysis
+- **Loan Payment Tracking**: Track vehicle loan payments with support for different payment types
+- **Vehicle Expense Tracking**: Monitor operating costs including insurance, fuel, maintenance, and other expenses
+- **Mileage Tracking**: Track vehicle mileage with YTD calculations and cost per mile analysis
+- **Vehicle Equity Analysis**: Calculate and track vehicle equity position over time
+- **Stacked Area Charts**: Monthly combined costs visualization with loan payments and expenses
+- **Cost Per Mile Metrics**: YTD cost per mile calculation including both loan payments and operating expenses
+- **Vehicle Summary Metrics**: Total car value, equity, loan balance, and latest mileage tracking
+
+### Changed
+- **Enhanced Data Processing**: Added vehicle-specific data processing functions with YTD mileage calculations
+- **Improved Analytics Components**: Created reusable vehicle analytics component with standardized chart grid
+- **Code Organization**: Moved all vehicle calculations to data processing module for better maintainability
+- **Design System**: Extended design system to support vehicle tracking UI components
+
+---
+
 ## [2.0.0] - 2025-07-17
 
 ### Added

@@ -49,6 +49,20 @@ def get_asset_classification_rules():
                 r'\b(btc|eth|ada|dot|sol|bnb|usdt|usdc)\b'
             ],
             'platforms': ['Coinbase', 'IBKR', 'Trading212', 'Vanguard', 'Fidelity', 'Hargreaves Lansdown', 'AJ Bell']
+        },
+        ASSET_TYPES['VEHICLES']: {
+            'exact_matches': [
+                'Car', 'Vehicle', 'Automobile', 'Motor', 'Motorcycle', 'Van', 'Truck',
+                'BMW', 'Audi', 'Mercedes', 'Volkswagen', 'Ford', 'Toyota', 'Honda',
+                'Nissan', 'Hyundai', 'Kia', 'Volvo', 'Jaguar', 'Land Rover', 'Range Rover'
+            ],
+            'patterns': [
+                r'\b(car|vehicle|automobile|motor|bike|scooter|van|truck)\b',
+                r'\b(bmw|audi|mercedes|volkswagen|ford|toyota|honda|nissan)\b',
+                r'\b(hyundai|kia|volvo|jaguar|land rover|range rover)\b',
+                r'\b(series|model|class|type)\b'
+            ],
+            'platforms': ['Owned', 'Santander', 'Barclays', 'HSBC', 'Lloyds', 'NatWest', 'RBS']
         }
     }
     

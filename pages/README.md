@@ -15,6 +15,7 @@ For example, `2_All_Assets.py` becomes the second link in the sidebar, displayed
 -   `3_Cash.py`: A detailed deep-dive into cash assets with platform analysis, time series trends, and liquidity metrics.
 -   `4_Investments.py`: A detailed deep-dive into investment assets with performance analytics, risk analysis, and asset allocation breakdowns.
 -   `5_Pensions.py`: A detailed deep-dive into pension assets, featuring actual return calculations (which account for cashflows) and an interactive long-term growth forecast.
+-   `6_Vehicles.py`: A comprehensive vehicle tracking dashboard with loan payments, expenses, mileage analytics, and cost per mile analysis.
 -   `7_Card_Demo.py`: Development/testing page for card components (to be removed in production).
 
 ## Standardization
