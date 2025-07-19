@@ -1,4 +1,4 @@
-# FinTracker v2.1.0
+# FinTracker v2.2.0
 
 A financial dashboard and analytics application built with Streamlit for tracking and analyzing personal financial assets, now with cashflow tracking, forecasting capabilities, and comprehensive vehicle tracking.
 
@@ -97,6 +97,18 @@ The application supports three additional Google Sheets for vehicle tracking:
 3. Activate the environment: `.\.venv\Scripts\Activate.ps1`
 4. Install dependencies: `pip install -r requirements.txt`
 
+## Code Quality and Formatting
+
+This project uses `black` for opinionated code formatting and `Ruff` for linting, import sorting, and automatic error correction. To maintain code quality, run the following commands before committing changes:
+
+```bash
+# Fix linting and import errors
+ruff check --fix .
+
+# Format the code
+black .
+```
+
 ## Setup
 
 1. Create a Google Sheets service account and download the JSON credentials
@@ -109,7 +121,7 @@ The application supports three additional Google Sheets for vehicle tracking:
 - **Home**: Portfolio overview and summary metrics
 - **All Assets**: Complete portfolio analysis
 - **Cash**: Cash assets dashboard
-- **Investments**: Investment assets dashboard  
+- **Investments**: Investment assets dashboard
 - **Pensions**: Pension assets dashboard
 - **Vehicles**: Vehicle tracking dashboard with loan payments, expenses, and mileage analytics
 

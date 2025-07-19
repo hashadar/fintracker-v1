@@ -35,4 +35,4 @@ Each page provides:
 - Asset allocation breakdowns
 - Time series analysis
 - Platform and asset distribution
-- Risk and performance metrics 
+- Risk and performance metrics

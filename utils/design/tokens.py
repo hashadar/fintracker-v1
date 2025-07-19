@@ -8,12 +8,12 @@ Single source of truth for colors, spacing, typography, and other design variabl
 # =============================================================================
 
 # Brand Colors
-BRAND_PRIMARY = "#3b82f6"      # Blue
-BRAND_SECONDARY = "#8b5cf6"    # Purple
-BRAND_SUCCESS = "#10b981"      # Green
-BRAND_WARNING = "#f59e0b"      # Amber
-BRAND_ERROR = "#ef4444"        # Red
-BRAND_INFO = "#06b6d4"         # Cyan
+BRAND_PRIMARY = "#3b82f6"  # Blue
+BRAND_SECONDARY = "#8b5cf6"  # Purple
+BRAND_SUCCESS = "#10b981"  # Green
+BRAND_WARNING = "#f59e0b"  # Amber
+BRAND_ERROR = "#ef4444"  # Red
+BRAND_INFO = "#06b6d4"  # Cyan
 
 # Neutral Colors
 NEUTRAL_50 = "#f9fafb"
@@ -59,22 +59,22 @@ TEXT_INVERSE = NEUTRAL_50
 SHADOW_LIGHT = "rgba(0, 0, 0, 0.08)"
 SHADOW_MEDIUM = "rgba(0, 0, 0, 0.12)"
 SHADOW_HEAVY = "rgba(0, 0, 0, 0.16)"
-SHADOW_EMPHASIS = f"rgba(59, 130, 246, 0.15)"  # Brand primary with opacity
+SHADOW_EMPHASIS = "rgba(59, 130, 246, 0.15)"  # Brand primary with opacity
 
 # =============================================================================
 # TYPOGRAPHY TOKENS
 # =============================================================================
 
 # Font Sizes
-FONT_SIZE_XS = "0.75rem"      # 12px
-FONT_SIZE_SM = "0.875rem"     # 14px
-FONT_SIZE_BASE = "1rem"       # 16px
-FONT_SIZE_LG = "1.125rem"     # 18px
-FONT_SIZE_XL = "1.25rem"      # 20px
-FONT_SIZE_2XL = "1.5rem"      # 24px
-FONT_SIZE_3XL = "1.875rem"    # 30px
-FONT_SIZE_4XL = "2.25rem"     # 36px
-FONT_SIZE_5XL = "3rem"        # 48px
+FONT_SIZE_XS = "0.75rem"  # 12px
+FONT_SIZE_SM = "0.875rem"  # 14px
+FONT_SIZE_BASE = "1rem"  # 16px
+FONT_SIZE_LG = "1.125rem"  # 18px
+FONT_SIZE_XL = "1.25rem"  # 20px
+FONT_SIZE_2XL = "1.5rem"  # 24px
+FONT_SIZE_3XL = "1.875rem"  # 30px
+FONT_SIZE_4XL = "2.25rem"  # 36px
+FONT_SIZE_5XL = "3rem"  # 48px
 
 # Font Weights
 FONT_WEIGHT_NORMAL = "400"
@@ -100,27 +100,27 @@ LETTER_SPACING_WIDEST = "0.1em"
 # =============================================================================
 
 # Base spacing unit (4px)
-SPACE_1 = "0.25rem"   # 4px
-SPACE_2 = "0.5rem"    # 8px
-SPACE_3 = "0.75rem"   # 12px
-SPACE_4 = "1rem"      # 16px
-SPACE_5 = "1.25rem"   # 20px
-SPACE_6 = "1.5rem"    # 24px
-SPACE_8 = "2rem"      # 32px
-SPACE_10 = "2.5rem"   # 40px
-SPACE_12 = "3rem"     # 48px
-SPACE_16 = "4rem"     # 64px
-SPACE_20 = "5rem"     # 80px
+SPACE_1 = "0.25rem"  # 4px
+SPACE_2 = "0.5rem"  # 8px
+SPACE_3 = "0.75rem"  # 12px
+SPACE_4 = "1rem"  # 16px
+SPACE_5 = "1.25rem"  # 20px
+SPACE_6 = "1.5rem"  # 24px
+SPACE_8 = "2rem"  # 32px
+SPACE_10 = "2.5rem"  # 40px
+SPACE_12 = "3rem"  # 48px
+SPACE_16 = "4rem"  # 64px
+SPACE_20 = "5rem"  # 80px
 
 # =============================================================================
 # BORDER RADIUS TOKENS
 # =============================================================================
 
-BORDER_RADIUS_SM = "0.25rem"   # 4px
+BORDER_RADIUS_SM = "0.25rem"  # 4px
 BORDER_RADIUS_MD = "0.375rem"  # 6px
-BORDER_RADIUS_LG = "0.5rem"    # 8px
-BORDER_RADIUS_XL = "0.75rem"   # 12px
-BORDER_RADIUS_2XL = "1rem"     # 16px
+BORDER_RADIUS_LG = "0.5rem"  # 8px
+BORDER_RADIUS_XL = "0.75rem"  # 12px
+BORDER_RADIUS_2XL = "1rem"  # 16px
 BORDER_RADIUS_FULL = "9999px"
 
 # =============================================================================
@@ -161,7 +161,9 @@ Z_INDEX_TOOLTIP = "1070"
 CHART_TEMPLATE = "plotly_white"
 
 # Chart Typography
-CHART_FONT_FAMILY = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+CHART_FONT_FAMILY = (
+    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+)
 CHART_FONT_SIZE = 12
 
 # Chart Dimensions
@@ -175,55 +177,58 @@ CHART_AXIS_LINE_WIDTH = 1
 CHART_GRID_WIDTH = 1
 
 # Chart Background
-CHART_PLOT_BGCOLOR = 'rgba(0,0,0,0)'
-CHART_PAPER_BGCOLOR = 'rgba(0,0,0,0)'
+CHART_PLOT_BGCOLOR = "rgba(0,0,0,0)"
+CHART_PAPER_BGCOLOR = "rgba(0,0,0,0)"
 
 # Chart Color Palette
 CHART_COLORS = [
-    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
 ]
 
 # Chart Label Configuration
 CHART_LABELS = {
     # Time-based labels
-    'month': 'Month',
-    'date': 'Date',
-    'year': 'Year',
-    
+    "month": "Month",
+    "date": "Date",
+    "year": "Year",
     # Financial labels
-    'value': 'Value',
-    'amount': 'Amount',
-    'balance': 'Balance',
-    'total': 'Total',
-    'percentage': 'Percentage',
-    'frequency': 'Frequency',
-    'count': 'Count',
-    
+    "value": "Value",
+    "amount": "Amount",
+    "balance": "Balance",
+    "total": "Total",
+    "percentage": "Percentage",
+    "frequency": "Frequency",
+    "count": "Count",
     # Asset-specific labels
-    'asset_type': 'Asset Type',
-    'asset_name': 'Asset Name',
-    'allocation': 'Allocation',
-    'distribution': 'Distribution',
-    
+    "asset_type": "Asset Type",
+    "asset_name": "Asset Name",
+    "allocation": "Allocation",
+    "distribution": "Distribution",
     # Performance labels
-    'return': 'Return',
-    'growth': 'Growth',
-    'change': 'Change',
-    'performance': 'Performance',
-    
+    "return": "Return",
+    "growth": "Growth",
+    "change": "Change",
+    "performance": "Performance",
     # Risk labels
-    'volatility': 'Volatility',
-    'risk': 'Risk',
-    'sharpe_ratio': 'Sharpe Ratio',
-    
+    "volatility": "Volatility",
+    "risk": "Risk",
+    "sharpe_ratio": "Sharpe Ratio",
     # Metric labels
-    'metric': 'Metric',
-    'value_usd': 'Value (USD)',
-    'value_gbp': 'Value (GBP)',
-    'percentage_change': 'Percentage Change',
-    'monthly_change': 'Monthly Change',
-    'annualized_return': 'Annualized Return'
+    "metric": "Metric",
+    "value_usd": "Value (USD)",
+    "value_gbp": "Value (GBP)",
+    "percentage_change": "Percentage Change",
+    "monthly_change": "Monthly Change",
+    "annualized_return": "Annualized Return",
 }
 
 # =============================================================================
@@ -267,13 +272,14 @@ CARD_CHANGE_MARGIN_TOP = SPACE_3
 # COLOR UTILITY FUNCTIONS
 # =============================================================================
 
+
 def get_change_color(color_type: str) -> str:
     """
     Get the appropriate color for change indicators.
-    
+
     Args:
         color_type (str): Type of color change ("normal", "inverse")
-    
+
     Returns:
         str: CSS color value
     """
@@ -284,13 +290,14 @@ def get_change_color(color_type: str) -> str:
     else:
         return NEUTRAL_500
 
+
 def get_emphasis_color(color_name: str = "primary") -> str:
     """
     Get emphasis color based on name.
-    
+
     Args:
         color_name (str): Color name ("primary", "success", "warning", "error", "info")
-    
+
     Returns:
         str: CSS color value
     """
@@ -299,72 +306,88 @@ def get_emphasis_color(color_name: str = "primary") -> str:
         "success": BRAND_SUCCESS,
         "warning": BRAND_WARNING,
         "error": BRAND_ERROR,
-        "info": BRAND_INFO
+        "info": BRAND_INFO,
     }
     return color_map.get(color_name, BRAND_PRIMARY)
 
-def get_background_gradient(color: str, opacity_start: str = "15", opacity_end: str = "08") -> str:
+
+def get_background_gradient(
+    color: str, opacity_start: str = "15", opacity_end: str = "08"
+) -> str:
     """
     Create a background gradient string.
-    
+
     Args:
         color (str): Base color
         opacity_start (str): Starting opacity percentage
         opacity_end (str): Ending opacity percentage
-    
+
     Returns:
         str: CSS gradient string
     """
-    return f"linear-gradient(135deg, {color}{opacity_start} 0%, {color}{opacity_end} 100%)"
+    return (
+        f"linear-gradient(135deg, {color}{opacity_start} 0%, {color}{opacity_end} 100%)"
+    )
+
 
 def get_border_color(color: str, opacity: str = "30") -> str:
     """
     Create a border color with opacity.
-    
+
     Args:
         color (str): Base color
         opacity (str): Opacity percentage
-    
+
     Returns:
         str: CSS color with opacity
     """
     return f"{color}{opacity}"
 
+
 # =============================================================================
 # CARD STYLE UTILITY FUNCTIONS
 # =============================================================================
+
 
 def get_card_base_styles() -> str:
     """Get base card styles."""
     return f"background: {BACKGROUND_PRIMARY}; border: {CARD_BORDER_WIDTH_NORMAL} solid {BORDER_PRIMARY}; border-radius: {BORDER_RADIUS_LG}; padding: {CARD_PADDING_MD}; box-shadow: {SHADOW_SM}; transition: {TRANSITION_NORMAL}; min-height: 120px; display: flex; flex-direction: column; justify-content: center;"
 
+
 def get_emphasis_card_styles(emphasis_color: str = BRAND_PRIMARY) -> str:
     """Get emphasis card styles."""
     return f"background: {BACKGROUND_PRIMARY}; border: {CARD_BORDER_WIDTH_EMPHASIS} solid {emphasis_color}; border-radius: {BORDER_RADIUS_LG}; padding: {CARD_PADDING_MD}; box-shadow: {SHADOW_MD}; transition: {TRANSITION_NORMAL}; position: relative; min-height: 140px; display: flex; flex-direction: column; justify-content: center;"
+
 
 def get_card_title_styles() -> str:
     """Get card title styles."""
     return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {CARD_TITLE_FONT_WEIGHT}; color: {CARD_TITLE_COLOR}; letter-spacing: {CARD_TITLE_LETTER_SPACING}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; margin-bottom: {SPACE_3}; line-height: {LINE_HEIGHT_TIGHT};"
 
+
 def get_emphasis_card_title_styles(emphasis_color: str = BRAND_PRIMARY) -> str:
     """Get emphasis card title styles."""
     return f"font-size: {CARD_TITLE_FONT_SIZE}; font-weight: {CARD_TITLE_FONT_WEIGHT}; color: {emphasis_color}; letter-spacing: {CARD_TITLE_LETTER_SPACING}; text-transform: {CARD_TITLE_TEXT_TRANSFORM}; margin-bottom: {SPACE_3}; line-height: {LINE_HEIGHT_TIGHT};"
+
 
 def get_card_metric_styles(font_size: str = CARD_METRIC_FONT_SIZE_SIMPLE) -> str:
     """Get card metric styles."""
     return f"font-size: {font_size}; font-weight: {CARD_METRIC_FONT_WEIGHT}; color: {CARD_METRIC_COLOR}; line-height: {CARD_METRIC_LINE_HEIGHT}; margin-bottom: {SPACE_3};"
 
+
 def get_card_caption_styles() -> str:
     """Get card caption styles."""
     return f"font-size: {CARD_CAPTION_FONT_SIZE}; color: {CARD_CAPTION_COLOR}; margin-top: {CARD_CAPTION_MARGIN_TOP}; line-height: {LINE_HEIGHT_TIGHT};"
+
 
 def get_card_change_styles() -> str:
     """Get card change styles."""
     return f"font-size: {CARD_CHANGE_FONT_SIZE}; font-weight: {CARD_CHANGE_FONT_WEIGHT}; margin-top: {CARD_CHANGE_MARGIN_TOP}; line-height: {LINE_HEIGHT_TIGHT};"
 
+
 def get_emphasis_accent_bar(emphasis_color: str = BRAND_PRIMARY) -> str:
     """Get emphasis accent bar styles."""
     return f"position: absolute; top: 0; left: 0; right: 0; height: 4px; background: {emphasis_color}; border-radius: {BORDER_RADIUS_LG} {BORDER_RADIUS_LG} 0 0;"
+
 
 # =============================================================================
 # GLOBAL STYLES
@@ -400,34 +423,34 @@ CUSTOM_STYLE = f"""
         margin: 1rem 0;
         border: 1px solid {BORDER_PRIMARY};
     }}
-    
+
     /* Card spacing improvements */
     .stMarkdown > div {{
         margin-bottom: 1rem;
     }}
-    
+
     /* Ensure consistent card heights in grids */
     [data-testid="column"] > div {{
         height: 100%;
         display: flex;
         flex-direction: column;
     }}
-    
+
     /* Consistent line height for card elements */
     .stMarkdown > div > div {{
         line-height: 1.2 !important;
     }}
-    
+
     /* Better vertical rhythm for card elements */
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
         margin-top: 1.5rem;
         margin-bottom: 1rem;
         line-height: 1.2 !important;
     }}
-    
+
     .stMarkdown p {{
         margin-bottom: 0.75rem;
         line-height: 1.2 !important;
     }}
     </style>
-    """ 
+    """

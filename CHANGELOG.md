@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.h
 
 ---
 
+## [2.2.0] - 2025-07-20
+
+### Added
+- **Code Quality Tooling**: Integrated `black` for standardized code formatting and `Ruff` for high-speed linting, import sorting, and automatic error correction.
+- **Homepage Data Status**: The homepage now features a dynamic status section that reports the load status and record count for each individual data source.
+
+### Changed
+- **Data Loading Refactoring**: Completely refactored the data loading pipeline in `utils/etl/data_loader.py`. All data loading and cleaning logic is now centralized into generic, reusable functions that are driven by sheet-specific configurations.
+- **Configuration-Driven Validation**: The data loader now uses centralized validation rules from `utils/config.py` to check for unexpected values in the source data and provide warnings.
+- **Simplified Asset Classification**: Replaced the complex, rule-based asset classifier with a simple, lookup-based system that uses mappings defined in `utils/config.py`.
+- **Improved Data Reloading**: The "Reload Data" button now clears all of Streamlit's caches to ensure fresh data is always loaded.
+- **Code Formatting**: Applied `black` and `Ruff` to the entire codebase to standardize formatting and resolve linting errors.
+
+### Removed
+- **Unused Configuration**: Removed several unused variables from `utils/config.py` to reduce clutter.
+
 ## [2.1.0] - 2025-07-19
 
 ### Added
@@ -50,4 +66,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.h
 - **Initial Alpha Release**: Core application functionality and design system.
 - **Asset Tracking**: Implemented tracking for Cash, Investments, and Pensions from Google Sheets.
 - **Interactive Dashboards**: Created dedicated pages with interactive charts and metrics for each asset type.
-- **Standardized Codebase**: Established a modular architecture with a centralized design system, configuration, and reusable components for charts and UI elements. 
+- **Standardized Codebase**: Established a modular architecture with a centralized design system, configuration, and reusable components for charts and UI elements.

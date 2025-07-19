@@ -1,4 +1,4 @@
-# Utility Modules v2.1.0
+# Utility Modules v2.2.0
 
 This directory contains general utility modules that support the main financial dashboard application.
 
@@ -7,8 +7,8 @@ This directory contains general utility modules that support the main financial 
 ## Modules
 
 ### `etl/`
-- `data_loader.py`: Loads and preprocesses financial data from Google Sheets, now including pension cashflows and vehicle data
-- `asset_classifier.py`: Classifies assets by type and platform, including vehicles
+- `data_loader.py`: Loads and preprocesses financial data from Google Sheets, now including pension cashflows and vehicle data. The loader has been refactored to use a centralized configuration for data validation and cleaning.
+- `asset_classifier.py`: Classifies assets by type and platform, including vehicles. It now uses a simple, lookup-based mapping from the central configuration.
 
 ### `data_processing.py`
 - Data processing utilities for filtering, aggregation, and rolling metrics
@@ -129,4 +129,4 @@ These modules are imported and used by the main application (`Home.py`) and the 
 - **Follow Design System**: Use design tokens for colors, spacing, and typography
 - **HTML Safety**: All user-facing text is automatically escaped, but be mindful of data sources
 - **Performance**: Metrics are calculated on-demand and cached where appropriate
-- **Consistency**: Follow the established patterns for data processing and visualization 
+- **Consistency**: Follow the established patterns for data processing and visualization

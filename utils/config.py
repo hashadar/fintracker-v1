@@ -7,36 +7,26 @@ separate from visual design tokens which are in tokens.py.
 
 # Asset Types and Classifications
 ASSET_TYPES = {
-    'CASH': 'Cash',
-    'INVESTMENTS': 'Investments', 
-    'PENSIONS': 'Pensions',
-    'PROPERTY': 'Property',
-    'VEHICLES': 'Vehicles',
-    'OTHER': 'Other'
-}
-
-ASSET_SUBTYPES = {
-    'CASH': ['Savings', 'Current Account', 'Emergency Fund'],
-    'INVESTMENTS': ['Stocks', 'Bonds', 'ETFs', 'Mutual Funds', 'Crypto'],
-    'PENSIONS': ['Workplace Pension', 'Personal Pension', 'SIPP'],
-    'PROPERTY': ['Primary Residence', 'Investment Property'],
-    'VEHICLES': ['Car', 'Motorcycle', 'Van', 'Other Vehicle'],
-    'OTHER': ['Collectibles', 'Other Assets']
+    "CASH": "Cash",
+    "INVESTMENTS": "Investments",
+    "PENSIONS": "Pensions",
+    "PROPERTY": "Property",
+    "VEHICLES": "Vehicles",
+    "OTHER": "Other",
 }
 
 # Date and Currency Formats
-DATE_FORMAT = '%Y-%m-%d'
-DISPLAY_DATE_FORMAT = '%B %Y'
-SHORT_DATE_FORMAT = '%b %Y'
-CURRENCY_FORMAT = '£{:,.2f}'
-CURRENCY_SYMBOL = '£'
-PERCENTAGE_FORMAT = '{:.1f}%'
+DATE_FORMAT = "%Y-%m-%d"
+DISPLAY_DATE_FORMAT = "%B %Y"
+SHORT_DATE_FORMAT = "%b %Y"
+CURRENCY_FORMAT = "£{:,.2f}"
+CURRENCY_SYMBOL = "£"
+PERCENTAGE_FORMAT = "{:.1f}%"
 
 # Business Logic Constants
 RISK_FREE_RATE = 0.05  # 5% annual risk-free rate
 DEFAULT_FORECAST_PERIODS = 12  # months
 DEFAULT_ROLLING_WINDOW = 12  # months for rolling averages
-
 
 
 # Page Layout Constants
@@ -50,69 +40,151 @@ MIN_DATA_POINTS_FOR_FORECAST = 6
 SEASONAL_PERIODS = 12  # monthly seasonality
 CONFIDENCE_LEVEL = 0.95
 
-# Google Sheets Configuration
-SHEET_NAME = 'FinTracker'
-DATE_COLUMN = 'Date'
-AMOUNT_COLUMN = 'Amount'
-CATEGORY_COLUMN = 'Category'
-DESCRIPTION_COLUMN = 'Description'
+# ==============================================================================
+# DATA SOURCE CONFIGURATIONS
+# ==============================================================================
 
-# Pension Cashflow Configuration
-PENSION_CASHFLOW_SHEET = 'Pension Cashflows'
-CASHFLOW_TYPE_COLUMN = 'Cashflow Type'
-NOTES_COLUMN = 'Notes'
+BALANCE_SHEET_CONFIG = {
+    "sheet_name": "Balance Sheet",
+    "required_columns": ["Platform", "Asset", "Value", "Timestamp"],
+    "optional_columns": ["Token Amount"],
+    "currency_columns": ["Value"],
+    "numeric_columns": ["Token Amount"],
+    "date_columns": ["Timestamp"],
+}
 
-# Car Tracking Configuration
-CAR_ASSETS_SHEET = 'Car Assets'
-CAR_PAYMENTS_SHEET = 'Car Payments'
-CAR_EXPENSES_SHEET = 'Car Expenses'
+PENSION_CASHFLOWS_CONFIG = {
+    "sheet_name": "Pension Cashflows",
+    "required_columns": ["Platform", "Asset", "Value", "Timestamp", "Cashflow Type"],
+    "optional_columns": ["Description", "Notes"],
+    "currency_columns": ["Value"],
+    "numeric_columns": [],
+    "date_columns": ["Timestamp"],
+}
 
-# Car-specific column names
-CAR_LOAN_STATUS_COLUMN = 'Loan_Status'
-CAR_LOAN_BALANCE_COLUMN = 'Loan_Balance'
-CAR_VALUE_COLUMN = 'Car_Value'
-CAR_MILEAGE_COLUMN = 'Mileage'
-CAR_PAYMENT_AMOUNT_COLUMN = 'Payment_Amount'
-CAR_PAYMENT_TYPE_COLUMN = 'Payment_Type'
-CAR_EXPENSE_TYPE_COLUMN = 'Expense_Type'
-CAR_PROVIDER_COLUMN = 'Platform/Provider'
+CAR_ASSETS_CONFIG = {
+    "sheet_name": "Car Assets",
+    "required_columns": [
+        "Timestamp",
+        "Platform",
+        "Asset",
+        "Loan_Status",
+        "Loan_Balance",
+        "Car_Value",
+        "Mileage",
+    ],
+    "optional_columns": ["Notes"],
+    "currency_columns": ["Loan_Balance", "Car_Value"],
+    "numeric_columns": ["Mileage"],
+    "date_columns": ["Timestamp"],
+}
+
+CAR_PAYMENTS_CONFIG = {
+    "sheet_name": "Car Payments",
+    "required_columns": [
+        "Timestamp",
+        "Platform",
+        "Asset",
+        "Payment_Amount",
+        "Payment_Type",
+    ],
+    "optional_columns": ["Notes"],
+    "currency_columns": ["Payment_Amount"],
+    "numeric_columns": [],
+    "date_columns": ["Timestamp"],
+}
+
+CAR_EXPENSES_CONFIG = {
+    "sheet_name": "Car Expenses",
+    "required_columns": [
+        "Timestamp",
+        "Asset",
+        "Expense_Type",
+        "Amount",
+        "Platform/Provider",
+    ],
+    "optional_columns": ["Notes"],
+    "currency_columns": ["Amount"],
+    "numeric_columns": [],
+    "date_columns": ["Timestamp"],
+}
+
+
+# ==============================================================================
+# DATA VALIDATION AND CLASSIFICATION MAPPINGS
+# ==============================================================================
+
+PLATFORM_TO_ASSET_TYPE = {
+    "IBKR": "Investments",
+    "HSBC": "Cash",
+    "Wise": "Cash",
+    "Coinbase": "Investments",
+    "Wahed": "Pensions",
+    "Standard Life": "Pensions",
+    "MotoNovo": "Vehicles",
+    "Owned": "Vehicles",
+}
+
+ASSET_TO_ASSET_TYPE = {
+    "ON BNS SAVER": "Cash",
+    "BTC": "Investments",
+    "ETH": "Investments",
+    "SOL": "Investments",
+    "Wahed SIPP": "Pensions",
+    "SL Pension": "Pensions",
+    "IBKR Total Portfolio": "Investments",
+    "Wise Savings": "Cash",
+    "Porsche Taycan 4S": "Vehicles",
+}
+
+BALANCE_SHEET_VALID_VALUES = {
+    "Platform": ["IBKR", "HSBC", "Wise", "Coinbase", "Wahed", "Standard Life"],
+    "Asset": [
+        "ON BNS SAVER",
+        "BTC",
+        "ETH",
+        "SOL",
+        "Wahed SIPP",
+        "SL Pension",
+        "IBKR Total Portfolio",
+        "Wise Savings",
+    ],
+}
+
+PENSION_CASHFLOWS_VALID_VALUES = {
+    "Platform": ["Wahed", "Standard Life"],
+    "Asset": ["Wahed SIPP", "SL Pension"],
+}
+
+CAR_ASSETS_VALID_VALUES = {
+    "Platform": ["MotoNovo", "Owned"],
+    "Asset": ["Porsche Taycan 4S"],
+    "Loan_Status": ["Financed", "Owned"],
+}
+
+CAR_PAYMENTS_VALID_VALUES = {
+    "Platform": ["MotoNovo"],
+    "Asset": ["Porsche Taycan 4S"],
+    "Payment_Type": ["Monthly Payment"],
+}
+
+CAR_EXPENSES_VALID_VALUES = {
+    "Asset": ["Porsche Taycan 4S"],
+    "Expense_Type": [
+        "Insurance",
+        "Road Tax",
+        "Parking",
+        "Maintenance",
+        "Fuel_Charging",
+        "Cleaning",
+    ],
+}
 
 # Car loan status options
-CAR_LOAN_STATUSES = {
-    'FINANCED': 'Financed',
-    'OWNED': 'Owned'
-}
-
-# Car payment types
-CAR_PAYMENT_TYPES = {
-    'REGULAR': 'Regular',
-    'EXTRA': 'Extra',
-    'REFINANCE': 'Refinance',
-    'FINAL': 'Final'
-}
-
-# Car expense types
-CAR_EXPENSE_TYPES = {
-    'INSURANCE': 'Insurance',
-    'ROAD_TAX': 'Road Tax',
-    'FUEL': 'Fuel',
-    'MAINTENANCE': 'Maintenance',
-    'OTHER': 'Other'
-}
+CAR_LOAN_STATUSES = {"FINANCED": "Financed", "OWNED": "Owned"}
 
 # Cashflow Types
-CASHFLOW_TYPES = {
-    'CONTRIBUTION': 'Contribution',
-    'FEE': 'Fee',
-    'TRANSFER': 'Transfer'
-}
-
-# Cashflow Descriptions
-CASHFLOW_DESCRIPTIONS = {
-    'EMPLOYER_CONTRIBUTION': 'Employer contribution',
-    'PERSONAL_CONTRIBUTION': 'Personal contribution',
-    'TAX_RELIEF': 'Tax relief'
-}
+CASHFLOW_TYPES = {"CONTRIBUTION": "Contribution", "FEE": "Fee", "TRANSFER": "Transfer"}
 
 # Risk Metrics Configuration
 VOLATILITY_WINDOW = 12  # months for volatility calculation
@@ -132,16 +204,15 @@ CAR_MAINTENANCE_FREQUENCY = 12  # months between services
 def validate_config():
     """
     Validate configuration constants to ensure they are properly defined and have valid values.
-    
+
     Returns:
         dict: Validation results with 'valid' boolean and 'errors' list
     """
-    import re
     from datetime import datetime
-    
+
     errors = []
     warnings = []
-    
+
     # Validate asset types
     if not isinstance(ASSET_TYPES, dict) or not ASSET_TYPES:
         errors.append("ASSET_TYPES must be a non-empty dictionary")
@@ -149,119 +220,105 @@ def validate_config():
         for key, value in ASSET_TYPES.items():
             if not isinstance(value, str) or not value.strip():
                 errors.append(f"ASSET_TYPES['{key}'] must be a non-empty string")
-    
-    # Validate asset subtypes
-    if not isinstance(ASSET_SUBTYPES, dict):
-        errors.append("ASSET_SUBTYPES must be a dictionary")
-    else:
-        for key, subtypes in ASSET_SUBTYPES.items():
-            if not isinstance(subtypes, list):
-                errors.append(f"ASSET_SUBTYPES['{key}'] must be a list")
-    
+
     # Validate date formats
     date_formats = [DATE_FORMAT, DISPLAY_DATE_FORMAT, SHORT_DATE_FORMAT]
     test_date = datetime.now()
-    for format_name, date_format in [('DATE_FORMAT', DATE_FORMAT), 
-                                    ('DISPLAY_DATE_FORMAT', DISPLAY_DATE_FORMAT),
-                                    ('SHORT_DATE_FORMAT', SHORT_DATE_FORMAT)]:
+    for format_name, date_format in [
+        ("DATE_FORMAT", DATE_FORMAT),
+        ("DISPLAY_DATE_FORMAT", DISPLAY_DATE_FORMAT),
+        ("SHORT_DATE_FORMAT", SHORT_DATE_FORMAT),
+    ]:
         try:
             test_date.strftime(date_format)
         except ValueError:
             errors.append(f"{format_name} '{date_format}' is not a valid date format")
-    
+
     # Validate currency format
     try:
         CURRENCY_FORMAT.format(1234.56)
     except (ValueError, TypeError):
-        errors.append(f"CURRENCY_FORMAT '{CURRENCY_FORMAT}' is not a valid format string")
-    
+        errors.append(
+            f"CURRENCY_FORMAT '{CURRENCY_FORMAT}' is not a valid format string"
+        )
+
     # Validate percentage format
     try:
         PERCENTAGE_FORMAT.format(12.34)
     except (ValueError, TypeError):
-        errors.append(f"PERCENTAGE_FORMAT '{PERCENTAGE_FORMAT}' is not a valid format string")
-    
+        errors.append(
+            f"PERCENTAGE_FORMAT '{PERCENTAGE_FORMAT}' is not a valid format string"
+        )
+
     # Validate business logic constants
     if not isinstance(RISK_FREE_RATE, (int, float)) or RISK_FREE_RATE < 0:
         errors.append("RISK_FREE_RATE must be a non-negative number")
-    
+
     if not isinstance(DEFAULT_FORECAST_PERIODS, int) or DEFAULT_FORECAST_PERIODS <= 0:
         errors.append("DEFAULT_FORECAST_PERIODS must be a positive integer")
-    
+
     if not isinstance(DEFAULT_ROLLING_WINDOW, int) or DEFAULT_ROLLING_WINDOW <= 0:
         errors.append("DEFAULT_ROLLING_WINDOW must be a positive integer")
-    
-    if not isinstance(MIN_DATA_POINTS_FOR_FORECAST, int) or MIN_DATA_POINTS_FOR_FORECAST <= 0:
+
+    if (
+        not isinstance(MIN_DATA_POINTS_FOR_FORECAST, int)
+        or MIN_DATA_POINTS_FOR_FORECAST <= 0
+    ):
         errors.append("MIN_DATA_POINTS_FOR_FORECAST must be a positive integer")
-    
+
     if not isinstance(SEASONAL_PERIODS, int) or SEASONAL_PERIODS <= 0:
         errors.append("SEASONAL_PERIODS must be a positive integer")
-    
+
     if not isinstance(CONFIDENCE_LEVEL, (int, float)) or not (0 < CONFIDENCE_LEVEL < 1):
         errors.append("CONFIDENCE_LEVEL must be between 0 and 1")
-    
-    if not isinstance(VAR_CONFIDENCE_LEVEL, (int, float)) or not (0 < VAR_CONFIDENCE_LEVEL < 1):
+
+    if not isinstance(VAR_CONFIDENCE_LEVEL, (int, float)) or not (
+        0 < VAR_CONFIDENCE_LEVEL < 1
+    ):
         errors.append("VAR_CONFIDENCE_LEVEL must be between 0 and 1")
-    
+
     if not isinstance(VOLATILITY_WINDOW, int) or VOLATILITY_WINDOW <= 0:
         errors.append("VOLATILITY_WINDOW must be a positive integer")
-    
+
     if not isinstance(MAX_DRAWDOWN_WINDOW, int) or MAX_DRAWDOWN_WINDOW <= 0:
         errors.append("MAX_DRAWDOWN_WINDOW must be a positive integer")
-    
+
     if not isinstance(BENCHMARK_RETURN, (int, float)):
         errors.append("BENCHMARK_RETURN must be a number")
-    
+
     if not isinstance(INFLATION_RATE, (int, float)) or INFLATION_RATE < 0:
         errors.append("INFLATION_RATE must be a non-negative number")
-    
+
     # Validate string constants
     string_constants = {
-        'PAGE_TITLE': PAGE_TITLE,
-        'PAGE_ICON': PAGE_ICON,
-        'LAYOUT': LAYOUT,
-        'INITIAL_SIDEBAR_STATE': INITIAL_SIDEBAR_STATE,
-        'SHEET_NAME': SHEET_NAME,
-        'DATE_COLUMN': DATE_COLUMN,
-        'AMOUNT_COLUMN': AMOUNT_COLUMN,
-        'CATEGORY_COLUMN': CATEGORY_COLUMN,
-        'DESCRIPTION_COLUMN': DESCRIPTION_COLUMN,
-        'PENSION_CASHFLOW_SHEET': PENSION_CASHFLOW_SHEET,
-        'CASHFLOW_TYPE_COLUMN': CASHFLOW_TYPE_COLUMN,
-        'NOTES_COLUMN': NOTES_COLUMN,
-        'CAR_ASSETS_SHEET': CAR_ASSETS_SHEET,
-        'CAR_PAYMENTS_SHEET': CAR_PAYMENTS_SHEET,
-        'CAR_EXPENSES_SHEET': CAR_EXPENSES_SHEET,
-        'CAR_LOAN_STATUS_COLUMN': CAR_LOAN_STATUS_COLUMN,
-        'CAR_LOAN_BALANCE_COLUMN': CAR_LOAN_BALANCE_COLUMN,
-        'CAR_VALUE_COLUMN': CAR_VALUE_COLUMN,
-        'CAR_MILEAGE_COLUMN': CAR_MILEAGE_COLUMN,
-        'CAR_PAYMENT_AMOUNT_COLUMN': CAR_PAYMENT_AMOUNT_COLUMN,
-        'CAR_PAYMENT_TYPE_COLUMN': CAR_PAYMENT_TYPE_COLUMN,
-        'CAR_EXPENSE_TYPE_COLUMN': CAR_EXPENSE_TYPE_COLUMN,
-        'CAR_PROVIDER_COLUMN': CAR_PROVIDER_COLUMN
+        "PAGE_TITLE": PAGE_TITLE,
+        "PAGE_ICON": PAGE_ICON,
+        "LAYOUT": LAYOUT,
+        "INITIAL_SIDEBAR_STATE": INITIAL_SIDEBAR_STATE,
     }
-    
+
     for name, value in string_constants.items():
         if not isinstance(value, str) or not value.strip():
             errors.append(f"{name} must be a non-empty string")
-    
+
     # Validate layout constants
-    if LAYOUT not in ['wide', 'centered']:
+    if LAYOUT not in ["wide", "centered"]:
         warnings.append(f"LAYOUT '{LAYOUT}' is not a standard Streamlit layout value")
-    
-    if INITIAL_SIDEBAR_STATE not in ['expanded', 'collapsed', 'auto']:
-        warnings.append(f"INITIAL_SIDEBAR_STATE '{INITIAL_SIDEBAR_STATE}' is not a standard Streamlit value")
-    
+
+    if INITIAL_SIDEBAR_STATE not in ["expanded", "collapsed", "auto"]:
+        warnings.append(
+            f"INITIAL_SIDEBAR_STATE '{INITIAL_SIDEBAR_STATE}' is not a standard Streamlit value"
+        )
+
     # Check for potential issues
     if DEFAULT_ROLLING_WINDOW > DEFAULT_FORECAST_PERIODS:
-        warnings.append("DEFAULT_ROLLING_WINDOW is larger than DEFAULT_FORECAST_PERIODS")
-    
+        warnings.append(
+            "DEFAULT_ROLLING_WINDOW is larger than DEFAULT_FORECAST_PERIODS"
+        )
+
     if MIN_DATA_POINTS_FOR_FORECAST > DEFAULT_ROLLING_WINDOW:
-        warnings.append("MIN_DATA_POINTS_FOR_FORECAST is larger than DEFAULT_ROLLING_WINDOW")
-    
-    return {
-        'valid': len(errors) == 0,
-        'errors': errors,
-        'warnings': warnings
-    } 
+        warnings.append(
+            "MIN_DATA_POINTS_FOR_FORECAST is larger than DEFAULT_ROLLING_WINDOW"
+        )
+
+    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
